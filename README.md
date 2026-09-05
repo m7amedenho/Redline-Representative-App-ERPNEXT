@@ -143,4 +143,4 @@ Please ensure your code follows the linting rules defined in `analysis_options.y
 
 ## License
 
-Proprietary software developed by Red Tech For Technology. All rights reserved.
+This project is licensed under the GPL-3.0 License - see the LICENSE file for details.
