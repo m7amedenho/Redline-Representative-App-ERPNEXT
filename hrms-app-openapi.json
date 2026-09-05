@@ -1,0 +1,5723 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "hrms's OpenAPI Definition",
+    "version": "16.30.0",
+    "description": "OpenAPI definition for whitelisted methods for hrms."
+  },
+  "servers": [
+    {
+      "url": "https://app.alexasfor.com",
+      "description": "Frappe site"
+    }
+  ],
+  "paths": {
+    "/api/method/hrms.subscription_utils.get_add_on_details": {
+      "get": {
+        "summary": "get_add_on_details",
+        "description": "",
+        "operationId": "hrms_subscription_utils_get_add_on_details",
+        "parameters": [
+          {
+            "name": "plan",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.subscription_utils.subscription_updated": {
+      "get": {
+        "summary": "subscription_updated",
+        "description": "",
+        "operationId": "hrms_subscription_utils_subscription_updated",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.utils.custom_method_for_charts.get_upcoming_holidays": {
+      "get": {
+        "summary": "get_upcoming_holidays",
+        "description": "",
+        "operationId": "hrms_utils_custom_method_for_charts_get_upcoming_holidays",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.utils.hierarchy_chart.get_all_nodes": {
+      "get": {
+        "summary": "get_all_nodes",
+        "description": "",
+        "operationId": "hrms_utils_hierarchy_chart_get_all_nodes",
+        "parameters": [
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.utils.__init__.get_country": {
+      "get": {
+        "summary": "get_country",
+        "description": "",
+        "operationId": "hrms_utils___init___get_country",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/method/hrms.controllers.employee_boarding_controller.get_onboarding_details": {
+      "get": {
+        "summary": "get_onboarding_details",
+        "description": "",
+        "operationId": "hrms_controllers_employee_boarding_controller_get_onboarding_details",
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parenttype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.utils.get_payroll_settings_for_payment_days": {
+      "get": {
+        "summary": "get_payroll_settings_for_payment_days",
+        "description": "",
+        "operationId": "hrms_payroll_utils_get_payroll_settings_for_payment_days",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_withholding.salary_withholding.set_withholding_cycles_and_to_date": {
+      "get": {
+        "summary": "set_withholding_cycles_and_to_date",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_withholding_salary_withholding_set_withholding_cycles_and_to_date",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_withholding.salary_withholding.get_payroll_frequency": {
+      "get": {
+        "summary": "get_payroll_frequency",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_withholding_salary_withholding_get_payroll_frequency",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "posting_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_slip.salary_slip.get_emp_and_working_day_details": {
+      "get": {
+        "summary": "get_emp_and_working_day_details",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_slip_salary_slip_get_emp_and_working_day_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_slip.salary_slip.process_salary_based_on_working_days": {
+      "get": {
+        "summary": "process_salary_based_on_working_days",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_slip_salary_slip_process_salary_based_on_working_days",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_slip.salary_slip.set_totals": {
+      "get": {
+        "summary": "set_totals",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_slip_salary_slip_set_totals",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_slip.salary_slip.make_salary_slip_from_timesheet": {
+      "get": {
+        "summary": "make_salary_slip_from_timesheet",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_slip_salary_slip_make_salary_slip_from_timesheet",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_slip.salary_slip.enqueue_email_salary_slips": {
+      "get": {
+        "summary": "enqueue_email_salary_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_slip_salary_slip_enqueue_email_salary_slips",
+        "parameters": [
+          {
+            "name": "names",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.gratuity.gratuity.calculate_work_experience_and_amount": {
+      "get": {
+        "summary": "calculate_work_experience_and_amount",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_gratuity_gratuity_calculate_work_experience_and_amount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.employee_benefit_claim.employee_benefit_claim.get_benefit_details": {
+      "get": {
+        "summary": "get_benefit_details",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_employee_benefit_claim_employee_benefit_claim_get_benefit_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.employee_benefit_claim.employee_benefit_claim.get_benefit_components": {
+      "get": {
+        "summary": "get_benefit_components",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_employee_benefit_claim_employee_benefit_claim_get_benefit_components",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchfield",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_len",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure.salary_structure.assign_salary_structure": {
+      "get": {
+        "summary": "assign_salary_structure",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_salary_structure_assign_salary_structure",
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "payroll_payable_account",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "base",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variable",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "income_tax_slab",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure.salary_structure.make_salary_slip": {
+      "get": {
+        "summary": "make_salary_slip",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_salary_structure_make_salary_slip",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "posting_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "as_print",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "print_format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_preview",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "lwp_days_corrected",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure.salary_structure.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.payroll.doctype.salary_structure.salary_structure",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_salary_structure_get_employees",
+        "parameters": [
+          {
+            "name": "salary_structure",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure.salary_structure.get_salary_component": {
+      "get": {
+        "summary": "get_salary_component",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_salary_structure_get_salary_component",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchfield",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_len",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.fill_employee_details": {
+      "get": {
+        "summary": "fill_employee_details",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_fill_employee_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.create_salary_slips": {
+      "get": {
+        "summary": "create_salary_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_create_salary_slips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.submit_salary_slips": {
+      "get": {
+        "summary": "submit_salary_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_submit_salary_slips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.has_bank_entries": {
+      "get": {
+        "summary": "has_bank_entries",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_has_bank_entries",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.make_bank_entry": {
+      "get": {
+        "summary": "make_bank_entry",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_make_bank_entry",
+        "parameters": [
+          {
+            "name": "for_withheld_salaries",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_employees_with_unmarked_attendance": {
+      "get": {
+        "summary": "get_employees_with_unmarked_attendance",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_employees_with_unmarked_attendance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.create_overtime_slips": {
+      "get": {
+        "summary": "create_overtime_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_create_overtime_slips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.submit_overtime_slips": {
+      "get": {
+        "summary": "submit_overtime_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_submit_overtime_slips",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_unsubmitted_overtime_slips": {
+      "get": {
+        "summary": "get_unsubmitted_overtime_slips",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_unsubmitted_overtime_slips",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_overtime_slip_details": {
+      "get": {
+        "summary": "get_overtime_slip_details",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_overtime_slip_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_start_end_dates": {
+      "get": {
+        "summary": "get_start_end_dates",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_start_end_dates",
+        "parameters": [
+          {
+            "name": "payroll_frequency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_end_date": {
+      "get": {
+        "summary": "get_end_date",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_end_date",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "frequency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.get_payroll_entries_for_jv": {
+      "get": {
+        "summary": "get_payroll_entries_for_jv",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_get_payroll_entries_for_jv",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_entry.payroll_entry.employee_query": {
+      "get": {
+        "summary": "employee_query",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_entry_payroll_entry_employee_query",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.bulk_salary_structure_assignment.bulk_salary_structure_assignment.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.payroll.doctype.bulk_salary_structure_assignment.bulk_salary_structure_assignment",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_bulk_salary_structure_assignment_bulk_salary_structure_assignment_get_employees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.bulk_salary_structure_assignment.bulk_salary_structure_assignment.bulk_assign_structure": {
+      "get": {
+        "summary": "bulk_assign_structure",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_bulk_salary_structure_assignment_bulk_salary_structure_assignment_bulk_assign_structure",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure_assignment.salary_structure_assignment.set_payroll_cost_centers": {
+      "get": {
+        "summary": "set_payroll_cost_centers",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_assignment_salary_structure_assignment_set_payroll_cost_centers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure_assignment.salary_structure_assignment.are_opening_entries_required": {
+      "get": {
+        "summary": "are_opening_entries_required",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_assignment_salary_structure_assignment_are_opening_entries_required",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_structure_assignment.salary_structure_assignment.get_employee_currency": {
+      "get": {
+        "summary": "get_employee_currency",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_structure_assignment_salary_structure_assignment_get_employee_currency",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.set_benefit_components_and_currency": {
+      "get": {
+        "summary": "set_benefit_components_and_currency",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_employee_benefit_application_employee_benefit_application_set_benefit_components_and_currency",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.employee_tax_exemption_declaration.employee_tax_exemption_declaration.make_proof_submission": {
+      "get": {
+        "summary": "make_proof_submission",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_employee_tax_exemption_declaration_employee_tax_exemption_declaration_make_proof_submission",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_component.salary_component.get_structures_to_be_updated": {
+      "get": {
+        "summary": "get_structures_to_be_updated",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_component_salary_component_get_structures_to_be_updated",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.salary_component.salary_component.update_salary_structures": {
+      "get": {
+        "summary": "update_salary_structures",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_salary_component_salary_component_update_salary_structures",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.doctype.payroll_correction.payroll_correction.fetch_salary_slip_details": {
+      "get": {
+        "summary": "fetch_salary_slip_details",
+        "description": "",
+        "operationId": "hrms_payroll_doctype_payroll_correction_payroll_correction_fetch_salary_slip_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.payroll.report.provident_fund_deductions.provident_fund_deductions.get_years": {
+      "get": {
+        "summary": "get_years",
+        "description": "",
+        "operationId": "hrms_payroll_report_provident_fund_deductions_provident_fund_deductions_get_years",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.www.hrms.get_context_for_dev": {
+      "post": {
+        "summary": "get_context_for_dev",
+        "description": "",
+        "operationId": "hrms_www_hrms_get_context_for_dev",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/method/hrms.overrides.employee_payment_entry.get_payment_entry_for_employee": {
+      "get": {
+        "summary": "get_payment_entry_for_employee",
+        "description": "",
+        "operationId": "hrms_overrides_employee_payment_entry_get_payment_entry_for_employee",
+        "parameters": [
+          {
+            "name": "dt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dn",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party_amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank_account",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank_amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.overrides.employee_payment_entry.get_payment_reference_details": {
+      "get": {
+        "summary": "get_payment_reference_details",
+        "description": "",
+        "operationId": "hrms_overrides_employee_payment_entry_get_payment_reference_details",
+        "parameters": [
+          {
+            "name": "reference_doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party_account_currency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.overrides.employee_payment_entry.get_reference_details_for_employee": {
+      "get": {
+        "summary": "get_reference_details_for_employee",
+        "description": "",
+        "operationId": "hrms_overrides_employee_payment_entry_get_reference_details_for_employee",
+        "parameters": [
+          {
+            "name": "reference_doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party_account_currency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.overrides.employee_payment_entry.set_exchange_rate_in_advance": {
+      "get": {
+        "summary": "set_exchange_rate_in_advance",
+        "description": "",
+        "operationId": "hrms_overrides_employee_payment_entry_set_exchange_rate_in_advance",
+        "parameters": [
+          {
+            "name": "doc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.overrides.employee_master.get_timeline_data": {
+      "get": {
+        "summary": "get_timeline_data",
+        "description": "",
+        "operationId": "hrms_overrides_employee_master_get_timeline_data",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.overrides.employee_master.get_retirement_date": {
+      "get": {
+        "summary": "get_retirement_date",
+        "description": "",
+        "operationId": "hrms_overrides_employee_master_get_retirement_date",
+        "parameters": [
+          {
+            "name": "date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.system_settings.get_user_pass_login_disabled": {
+      "get": {
+        "summary": "get_user_pass_login_disabled",
+        "description": "",
+        "operationId": "hrms_api_system_settings_get_user_pass_login_disabled",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/method/hrms.api.oauth.oauth_providers": {
+      "get": {
+        "summary": "oauth_providers",
+        "description": "",
+        "operationId": "hrms_api_oauth_oauth_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/method/hrms.api.roster.get_default_company": {
+      "get": {
+        "summary": "get_default_company",
+        "description": "",
+        "operationId": "hrms_api_roster_get_default_company",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.get_events": {
+      "get": {
+        "summary": "get_events · hrms.api.roster",
+        "description": "",
+        "operationId": "hrms_api_roster_get_events",
+        "parameters": [
+          {
+            "name": "month_start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "month_end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee_filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift_filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.get_schedule_from_assignment": {
+      "get": {
+        "summary": "get_schedule_from_assignment",
+        "description": "",
+        "operationId": "hrms_api_roster_get_schedule_from_assignment",
+        "parameters": [
+          {
+            "name": "shift_schedule_assignment",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.create_shift_schedule_assignment": {
+      "get": {
+        "summary": "create_shift_schedule_assignment",
+        "description": "",
+        "operationId": "hrms_api_roster_create_shift_schedule_assignment",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "repeat_on_days",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "frequency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.delete_shift_schedule_assignment": {
+      "get": {
+        "summary": "delete_shift_schedule_assignment",
+        "description": "",
+        "operationId": "hrms_api_roster_delete_shift_schedule_assignment",
+        "parameters": [
+          {
+            "name": "shift_schedule_assignment",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.swap_shift": {
+      "get": {
+        "summary": "swap_shift",
+        "description": "",
+        "operationId": "hrms_api_roster_swap_shift",
+        "parameters": [
+          {
+            "name": "src_shift",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "src_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tgt_employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tgt_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tgt_shift",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.break_shift": {
+      "get": {
+        "summary": "break_shift",
+        "description": "",
+        "operationId": "hrms_api_roster_break_shift",
+        "parameters": [
+          {
+            "name": "assignment",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.roster.insert_shift": {
+      "get": {
+        "summary": "insert_shift",
+        "description": "",
+        "operationId": "hrms_api_roster_insert_shift",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift_location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_current_user_info": {
+      "get": {
+        "summary": "get_current_user_info",
+        "description": "",
+        "operationId": "hrms_api___init___get_current_user_info",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_current_employee_info": {
+      "get": {
+        "summary": "get_current_employee_info",
+        "description": "",
+        "operationId": "hrms_api___init___get_current_employee_info",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_all_employees": {
+      "get": {
+        "summary": "get_all_employees",
+        "description": "",
+        "operationId": "hrms_api___init___get_all_employees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_reports_to_employee_name": {
+      "get": {
+        "summary": "get_reports_to_employee_name",
+        "description": "",
+        "operationId": "hrms_api___init___get_reports_to_employee_name",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_hr_settings": {
+      "get": {
+        "summary": "get_hr_settings",
+        "description": "",
+        "operationId": "hrms_api___init___get_hr_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_unread_notifications_count": {
+      "get": {
+        "summary": "get_unread_notifications_count",
+        "description": "",
+        "operationId": "hrms_api___init___get_unread_notifications_count",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.mark_all_notifications_as_read": {
+      "get": {
+        "summary": "mark_all_notifications_as_read",
+        "description": "",
+        "operationId": "hrms_api___init___mark_all_notifications_as_read",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.are_push_notifications_enabled": {
+      "get": {
+        "summary": "are_push_notifications_enabled",
+        "description": "",
+        "operationId": "hrms_api___init___are_push_notifications_enabled",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_attendance_calendar_events": {
+      "get": {
+        "summary": "get_attendance_calendar_events",
+        "description": "",
+        "operationId": "hrms_api___init___get_attendance_calendar_events",
+        "parameters": [
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_shift_requests": {
+      "get": {
+        "summary": "get_shift_requests",
+        "description": "",
+        "operationId": "hrms_api___init___get_shift_requests",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "approver_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_approval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_attendance_requests": {
+      "get": {
+        "summary": "get_attendance_requests",
+        "description": "",
+        "operationId": "hrms_api___init___get_attendance_requests",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_approval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_shift_request_approvers": {
+      "get": {
+        "summary": "get_shift_request_approvers",
+        "description": "",
+        "operationId": "hrms_api___init___get_shift_request_approvers",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_shifts": {
+      "get": {
+        "summary": "get_shifts",
+        "description": "",
+        "operationId": "hrms_api___init___get_shifts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_leave_applications": {
+      "get": {
+        "summary": "get_leave_applications",
+        "description": "",
+        "operationId": "hrms_api___init___get_leave_applications",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "approver_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_approval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_leave_balance_map": {
+      "get": {
+        "summary": "get_leave_balance_map",
+        "description": "",
+        "operationId": "hrms_api___init___get_leave_balance_map",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_holidays_for_employee": {
+      "get": {
+        "summary": "get_holidays_for_employee",
+        "description": "",
+        "operationId": "hrms_api___init___get_holidays_for_employee",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_leave_approval_details": {
+      "get": {
+        "summary": "get_leave_approval_details",
+        "description": "",
+        "operationId": "hrms_api___init___get_leave_approval_details",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_leave_types": {
+      "get": {
+        "summary": "get_leave_types",
+        "description": "",
+        "operationId": "hrms_api___init___get_leave_types",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_expense_claims": {
+      "get": {
+        "summary": "get_expense_claims",
+        "description": "",
+        "operationId": "hrms_api___init___get_expense_claims",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "approver_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_approval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_expense_claim_summary": {
+      "get": {
+        "summary": "get_expense_claim_summary",
+        "description": "",
+        "operationId": "hrms_api___init___get_expense_claim_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_expense_type_description": {
+      "get": {
+        "summary": "get_expense_type_description",
+        "description": "",
+        "operationId": "hrms_api___init___get_expense_type_description",
+        "parameters": [
+          {
+            "name": "expense_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_expense_claim_types": {
+      "get": {
+        "summary": "get_expense_claim_types",
+        "description": "",
+        "operationId": "hrms_api___init___get_expense_claim_types",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_expense_approval_details": {
+      "get": {
+        "summary": "get_expense_approval_details",
+        "description": "",
+        "operationId": "hrms_api___init___get_expense_approval_details",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_employee_advance_balance": {
+      "get": {
+        "summary": "get_employee_advance_balance",
+        "description": "",
+        "operationId": "hrms_api___init___get_employee_advance_balance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_company_currencies": {
+      "get": {
+        "summary": "get_company_currencies",
+        "description": "",
+        "operationId": "hrms_api___init___get_company_currencies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_currency_symbols": {
+      "get": {
+        "summary": "get_currency_symbols",
+        "description": "",
+        "operationId": "hrms_api___init___get_currency_symbols",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_company_cost_center_and_expense_account": {
+      "get": {
+        "summary": "get_company_cost_center_and_expense_account",
+        "description": "",
+        "operationId": "hrms_api___init___get_company_cost_center_and_expense_account",
+        "parameters": [
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_doctype_fields": {
+      "get": {
+        "summary": "get_doctype_fields",
+        "description": "",
+        "operationId": "hrms_api___init___get_doctype_fields",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_doctype_states": {
+      "get": {
+        "summary": "get_doctype_states",
+        "description": "",
+        "operationId": "hrms_api___init___get_doctype_states",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_attachments": {
+      "get": {
+        "summary": "get_attachments",
+        "description": "",
+        "operationId": "hrms_api___init___get_attachments",
+        "parameters": [
+          {
+            "name": "dt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dn",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.upload_base64_file": {
+      "get": {
+        "summary": "upload_base64_file",
+        "description": "",
+        "operationId": "hrms_api___init___upload_base64_file",
+        "parameters": [
+          {
+            "name": "content",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fieldname",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.delete_attachment": {
+      "get": {
+        "summary": "delete_attachment",
+        "description": "",
+        "operationId": "hrms_api___init___delete_attachment",
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__._download_pdf": {
+      "get": {
+        "summary": "_download_pdf",
+        "description": "",
+        "operationId": "hrms_api___init____download_pdf",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_workflow": {
+      "get": {
+        "summary": "get_workflow",
+        "description": "",
+        "operationId": "hrms_api___init___get_workflow",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.api.__init__.get_permitted_fields_for_write": {
+      "get": {
+        "summary": "get_permitted_fields_for_write",
+        "description": "",
+        "operationId": "hrms_api___init___get_permitted_fields_for_write",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.utils.get_employee_field_property": {
+      "get": {
+        "summary": "get_employee_field_property",
+        "description": "",
+        "operationId": "hrms_hr_utils_get_employee_field_property",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fieldname",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.utils.get_leave_period": {
+      "get": {
+        "summary": "get_leave_period",
+        "description": "",
+        "operationId": "hrms_hr_utils_get_leave_period",
+        "parameters": [
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.utils.get_monthly_earned_leave": {
+      "get": {
+        "summary": "get_monthly_earned_leave · hrms.hr.utils",
+        "description": "",
+        "operationId": "hrms_hr_utils_get_monthly_earned_leave",
+        "parameters": [
+          {
+            "name": "date_of_joining",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annual_leaves",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "frequency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rounding",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period_start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period_end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pro_rated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.utils.set_geolocation_from_coordinates": {
+      "get": {
+        "summary": "set_geolocation_from_coordinates",
+        "description": "",
+        "operationId": "hrms_hr_utils_set_geolocation_from_coordinates",
+        "parameters": [
+          {
+            "name": "doc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.page.team_updates.team_updates.get_data": {
+      "get": {
+        "summary": "get_data · hrms.hr.page.team_updates.team_updates",
+        "description": "",
+        "operationId": "hrms_hr_page_team_updates_team_updates_get_data",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.page.organizational_chart.organizational_chart.get_children": {
+      "get": {
+        "summary": "get_children · hrms.hr.page.organizational_chart.organizational_chart",
+        "description": "",
+        "operationId": "hrms_hr_page_organizational_chart_organizational_chart_get_children",
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exclude_node",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_assignment_tool.shift_assignment_tool.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.hr.doctype.shift_assignment_tool.shift_assignment_tool",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_assignment_tool_shift_assignment_tool_get_employees",
+        "parameters": [
+          {
+            "name": "advanced_filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_assignment_tool.shift_assignment_tool.bulk_assign": {
+      "get": {
+        "summary": "bulk_assign",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_assignment_tool_shift_assignment_tool_bulk_assign",
+        "parameters": [
+          {
+            "name": "employees",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_assignment_tool.shift_assignment_tool.bulk_process_shift_requests": {
+      "get": {
+        "summary": "bulk_process_shift_requests",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_assignment_tool_shift_assignment_tool_bulk_process_shift_requests",
+        "parameters": [
+          {
+            "name": "shift_requests",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_number_of_leave_days": {
+      "get": {
+        "summary": "get_number_of_leave_days",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_number_of_leave_days",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leave_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "half_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "half_day_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "holiday_list",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_leave_details": {
+      "get": {
+        "summary": "get_leave_details",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_leave_details",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_salary_slip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_leave_balance_on": {
+      "get": {
+        "summary": "get_leave_balance_on",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_leave_balance_on",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leave_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "consider_all_leaves_in_the_allocation_period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "for_consumption",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_holidays": {
+      "get": {
+        "summary": "get_holidays",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_holidays",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_events": {
+      "get": {
+        "summary": "get_events · hrms.hr.doctype.leave_application.leave_application",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_events",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_mandatory_approval": {
+      "get": {
+        "summary": "get_mandatory_approval",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_mandatory_approval",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_leave_approver": {
+      "get": {
+        "summary": "get_leave_approver",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_leave_approver",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_application.leave_application.get_leave_approver_and_mandatory": {
+      "get": {
+        "summary": "get_leave_approver_and_mandatory",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_application_leave_application_get_leave_approver_and_mandatory",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_block_list.leave_block_list.set_weekly_off_dates": {
+      "get": {
+        "summary": "set_weekly_off_dates",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_block_list_leave_block_list_set_weekly_off_dates",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.attendance.attendance.get_events": {
+      "get": {
+        "summary": "get_events · hrms.hr.doctype.attendance.attendance",
+        "description": "",
+        "operationId": "hrms_hr_doctype_attendance_attendance_get_events",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.attendance.attendance.mark_bulk_attendance": {
+      "get": {
+        "summary": "mark_bulk_attendance",
+        "description": "",
+        "operationId": "hrms_hr_doctype_attendance_attendance_mark_bulk_attendance",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.attendance.attendance.get_unmarked_days": {
+      "get": {
+        "summary": "get_unmarked_days",
+        "description": "",
+        "operationId": "hrms_hr_doctype_attendance_attendance_get_unmarked_days",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exclude_holidays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.attendance.attendance.get_employee_shift": {
+      "get": {
+        "summary": "get_employee_shift",
+        "description": "",
+        "operationId": "hrms_hr_doctype_attendance_attendance_get_employee_shift",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "for_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.overtime_slip.overtime_slip.get_frequency_and_dates": {
+      "get": {
+        "summary": "get_frequency_and_dates",
+        "description": "",
+        "operationId": "hrms_hr_doctype_overtime_slip_overtime_slip_get_frequency_and_dates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.overtime_slip.overtime_slip.get_emp_and_overtime_details": {
+      "get": {
+        "summary": "get_emp_and_overtime_details",
+        "description": "",
+        "operationId": "hrms_hr_doctype_overtime_slip_overtime_slip_get_emp_and_overtime_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_control_panel.leave_control_panel.allocate_leave": {
+      "get": {
+        "summary": "allocate_leave",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_control_panel_leave_control_panel_allocate_leave",
+        "parameters": [
+          {
+            "name": "employees",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_control_panel.leave_control_panel.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.hr.doctype.leave_control_panel.leave_control_panel",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_control_panel_leave_control_panel_get_employees",
+        "parameters": [
+          {
+            "name": "advanced_filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_control_panel.leave_control_panel.get_latest_leave_period": {
+      "get": {
+        "summary": "get_latest_leave_period",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_control_panel_leave_control_panel_get_latest_leave_period",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.hr_settings.hr_settings.set_proceed_with_frequency_change": {
+      "get": {
+        "summary": "set_proceed_with_frequency_change",
+        "description": "",
+        "operationId": "hrms_hr_doctype_hr_settings_hr_settings_set_proceed_with_frequency_change",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry.expire_allocation": {
+      "get": {
+        "summary": "expire_allocation",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_ledger_entry_leave_ledger_entry_expire_allocation",
+        "parameters": [
+          {
+            "name": "allocation",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expiry_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_performance_feedback.employee_performance_feedback.set_feedback_criteria": {
+      "get": {
+        "summary": "set_feedback_criteria",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_performance_feedback_employee_performance_feedback_set_feedback_criteria",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_type.shift_type.process_auto_attendance": {
+      "get": {
+        "summary": "process_auto_attendance",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_type_shift_type_process_auto_attendance",
+        "parameters": [
+          {
+            "name": "is_manually_triggered",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview_feedback.interview_feedback.get_applicable_interviewers": {
+      "get": {
+        "summary": "get_applicable_interviewers",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_feedback_interview_feedback_get_applicable_interviewers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.full_and_final_statement.full_and_final_statement.get_outstanding_statements": {
+      "get": {
+        "summary": "get_outstanding_statements",
+        "description": "",
+        "operationId": "hrms_hr_doctype_full_and_final_statement_full_and_final_statement_get_outstanding_statements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.full_and_final_statement.full_and_final_statement.create_journal_entry": {
+      "get": {
+        "summary": "create_journal_entry",
+        "description": "",
+        "operationId": "hrms_hr_doctype_full_and_final_statement_full_and_final_statement_create_journal_entry",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.full_and_final_statement.full_and_final_statement.get_account_and_amount": {
+      "get": {
+        "summary": "get_account_and_amount",
+        "description": "",
+        "operationId": "hrms_hr_doctype_full_and_final_statement_full_and_final_statement_get_account_and_amount",
+        "parameters": [
+          {
+            "name": "ref_doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref_document",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_checkin.employee_checkin.set_geolocation": {
+      "get": {
+        "summary": "set_geolocation · hrms.hr.doctype.employee_checkin.employee_checkin",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_checkin_employee_checkin_set_geolocation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_checkin.employee_checkin.fetch_shift": {
+      "get": {
+        "summary": "fetch_shift",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_checkin_employee_checkin_fetch_shift",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_checkin.employee_checkin.add_log_based_on_employee_field": {
+      "get": {
+        "summary": "add_log_based_on_employee_field",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_checkin_employee_checkin_add_log_based_on_employee_field",
+        "parameters": [
+          {
+            "name": "employee_field_value",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "log_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip_auto_attendance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee_fieldname",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_checkin.employee_checkin.bulk_fetch_shift": {
+      "get": {
+        "summary": "bulk_fetch_shift",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_checkin_employee_checkin_bulk_fetch_shift",
+        "parameters": [
+          {
+            "name": "checkins",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_offer.job_offer.make_employee": {
+      "get": {
+        "summary": "make_employee · hrms.hr.doctype.job_offer.job_offer",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_offer_job_offer_make_employee",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_offer.job_offer.get_offer_acceptance_rate": {
+      "get": {
+        "summary": "get_offer_acceptance_rate",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_offer_job_offer_get_offer_acceptance_rate",
+        "parameters": [
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_advance.employee_advance.create_return_through_additional_salary": {
+      "get": {
+        "summary": "create_return_through_additional_salary",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_advance_employee_advance_create_return_through_additional_salary",
+        "parameters": [
+          {
+            "name": "doc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_advance.employee_advance.make_return_entry": {
+      "get": {
+        "summary": "make_return_entry",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_advance_employee_advance_make_return_entry",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee_advance_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "return_amount",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "advance_account",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode_of_payment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_advance.employee_advance.get_employee_advance_return": {
+      "get": {
+        "summary": "get_employee_advance_return",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_advance_employee_advance_get_employee_advance_return",
+        "parameters": [
+          {
+            "name": "employee_advance",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.set_total_leaves_allocated": {
+      "get": {
+        "summary": "set_total_leaves_allocated",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_set_total_leaves_allocated",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.allocate_leaves_manually": {
+      "get": {
+        "summary": "allocate_leaves_manually",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_allocate_leaves_manually",
+        "parameters": [
+          {
+            "name": "new_leaves",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.get_monthly_earned_leave": {
+      "get": {
+        "summary": "get_monthly_earned_leave · hrms.hr.doctype.leave_allocation.leave_allocation",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_get_monthly_earned_leave",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.create_leave_adjustment": {
+      "get": {
+        "summary": "create_leave_adjustment",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_create_leave_adjustment",
+        "parameters": [
+          {
+            "name": "adjustment_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leaves_to_adjust",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "posting_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reason_for_adjustment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.retry_failed_allocations": {
+      "get": {
+        "summary": "retry_failed_allocations",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_retry_failed_allocations",
+        "parameters": [
+          {
+            "name": "failed_allocations",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_allocation.leave_allocation.expire_carried_forward_allocation": {
+      "get": {
+        "summary": "expire_carried_forward_allocation",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_allocation_leave_allocation_expire_carried_forward_allocation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_location.shift_location.set_geolocation": {
+      "get": {
+        "summary": "set_geolocation · hrms.hr.doctype.shift_location.shift_location",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_location_shift_location_set_geolocation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appointment_letter.appointment_letter.get_appointment_letter_details": {
+      "get": {
+        "summary": "get_appointment_letter_details",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appointment_letter_appointment_letter_get_appointment_letter_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview_type.interview_type.create_interview": {
+      "get": {
+        "summary": "create_interview · hrms.hr.doctype.interview_type.interview_type",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_type_interview_type_create_interview",
+        "parameters": [
+          {
+            "name": "docname",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.staffing_plan.staffing_plan.set_job_requisitions": {
+      "get": {
+        "summary": "set_job_requisitions",
+        "description": "",
+        "operationId": "hrms_hr_doctype_staffing_plan_staffing_plan_set_job_requisitions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.staffing_plan.staffing_plan.get_designation_counts": {
+      "get": {
+        "summary": "get_designation_counts",
+        "description": "",
+        "operationId": "hrms_hr_doctype_staffing_plan_staffing_plan_get_designation_counts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.staffing_plan.staffing_plan.get_active_staffing_plan_details": {
+      "get": {
+        "summary": "get_active_staffing_plan_details",
+        "description": "",
+        "operationId": "hrms_hr_doctype_staffing_plan_staffing_plan_get_active_staffing_plan_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.attendance_request.attendance_request.get_attendance_warnings": {
+      "get": {
+        "summary": "get_attendance_warnings",
+        "description": "",
+        "operationId": "hrms_hr_doctype_attendance_request_attendance_request_get_attendance_warnings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.exit_interview.exit_interview.send_exit_questionnaire": {
+      "get": {
+        "summary": "send_exit_questionnaire",
+        "description": "",
+        "operationId": "hrms_hr_doctype_exit_interview_exit_interview_send_exit_questionnaire",
+        "parameters": [
+          {
+            "name": "interviews",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.reschedule_interview": {
+      "get": {
+        "summary": "reschedule_interview",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_reschedule_interview",
+        "parameters": [
+          {
+            "name": "scheduled_on",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_time",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_time",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_interviewers": {
+      "get": {
+        "summary": "get_interviewers",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_interviewers",
+        "parameters": [
+          {
+            "name": "interview_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_feedback": {
+      "get": {
+        "summary": "get_feedback",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_feedback",
+        "parameters": [
+          {
+            "name": "interview",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_skill_wise_average_rating": {
+      "get": {
+        "summary": "get_skill_wise_average_rating",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_skill_wise_average_rating",
+        "parameters": [
+          {
+            "name": "interview",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.update_job_applicant_status": {
+      "get": {
+        "summary": "update_job_applicant_status",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_update_job_applicant_status",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "job_applicant",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_expected_skill_set": {
+      "get": {
+        "summary": "get_expected_skill_set",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_expected_skill_set",
+        "parameters": [
+          {
+            "name": "interview_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.create_interview_feedback": {
+      "get": {
+        "summary": "create_interview_feedback",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_create_interview_feedback",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interview_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interviewer",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "job_applicant",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_interviewer_list": {
+      "get": {
+        "summary": "get_interviewer_list",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_interviewer_list",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchfield",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_len",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview.interview.get_events": {
+      "get": {
+        "summary": "get_events · hrms.hr.doctype.interview.interview",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_interview_get_events",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.interview_round.interview_round.create_interview": {
+      "get": {
+        "summary": "create_interview · hrms.hr.doctype.interview_round.interview_round",
+        "description": "",
+        "operationId": "hrms_hr_doctype_interview_round_interview_round_create_interview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_opening_template.job_opening_template.create_job_opening_from_template": {
+      "get": {
+        "summary": "create_job_opening_from_template",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_opening_template_job_opening_template_create_job_opening_from_template",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.vehicle_log.vehicle_log.make_expense_claim": {
+      "get": {
+        "summary": "make_expense_claim",
+        "description": "",
+        "operationId": "hrms_hr_doctype_vehicle_log_vehicle_log_make_expense_claim",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.vehicle_log.vehicle_log.get_draft_expense_claims": {
+      "get": {
+        "summary": "get_draft_expense_claims",
+        "description": "",
+        "operationId": "hrms_hr_doctype_vehicle_log_vehicle_log_get_draft_expense_claims",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.vehicle_log.vehicle_log.get_draft_expense_claim_cancellation_actions": {
+      "get": {
+        "summary": "get_draft_expense_claim_cancellation_actions",
+        "description": "",
+        "operationId": "hrms_hr_doctype_vehicle_log_vehicle_log_get_draft_expense_claim_cancellation_actions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_requisition.job_requisition.check_duplicate_job_requisition": {
+      "get": {
+        "summary": "check_duplicate_job_requisition",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_requisition_job_requisition_check_duplicate_job_requisition",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_requisition.job_requisition.associate_job_opening": {
+      "get": {
+        "summary": "associate_job_opening",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_requisition_job_requisition_associate_job_opening",
+        "parameters": [
+          {
+            "name": "job_opening",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_requisition.job_requisition.make_job_opening": {
+      "get": {
+        "summary": "make_job_opening",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_requisition_job_requisition_make_job_opening",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_requisition.job_requisition.get_avg_time_to_fill": {
+      "get": {
+        "summary": "get_avg_time_to_fill",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_requisition_job_requisition_get_avg_time_to_fill",
+        "parameters": [
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.calculate_taxes": {
+      "get": {
+        "summary": "calculate_taxes",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_calculate_taxes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account_and_cost_center": {
+      "get": {
+        "summary": "get_expense_claim_account_and_cost_center",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_get_expense_claim_account_and_cost_center",
+        "parameters": [
+          {
+            "name": "expense_claim_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim_account": {
+      "get": {
+        "summary": "get_expense_claim_account",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_get_expense_claim_account",
+        "parameters": [
+          {
+            "name": "expense_claim_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.get_advances": {
+      "get": {
+        "summary": "get_advances",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_get_advances",
+        "parameters": [
+          {
+            "name": "expense_claim",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "advance_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.get_expense_claim": {
+      "get": {
+        "summary": "get_expense_claim",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_get_expense_claim",
+        "parameters": [
+          {
+            "name": "employee_advance",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.make_expense_claim_for_delivery_trip": {
+      "get": {
+        "summary": "make_expense_claim_for_delivery_trip",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_make_expense_claim_for_delivery_trip",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.expense_claim.expense_claim.get_allocation_amount": {
+      "get": {
+        "summary": "get_allocation_amount",
+        "description": "",
+        "operationId": "hrms_hr_doctype_expense_claim_expense_claim_get_allocation_amount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.shift_assignment.shift_assignment.get_events": {
+      "get": {
+        "summary": "get_events · hrms.hr.doctype.shift_assignment.shift_assignment",
+        "description": "",
+        "operationId": "hrms_hr_doctype_shift_assignment_shift_assignment_get_events",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_encashment.leave_encashment.get_leave_details_for_encashment": {
+      "get": {
+        "summary": "get_leave_details_for_encashment",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_encashment_leave_encashment_get_leave_details_for_encashment",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_onboarding.employee_onboarding.mark_onboarding_as_completed": {
+      "get": {
+        "summary": "mark_onboarding_as_completed",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_onboarding_employee_onboarding_mark_onboarding_as_completed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_onboarding.employee_onboarding.make_employee": {
+      "get": {
+        "summary": "make_employee · hrms.hr.doctype.employee_onboarding.employee_onboarding",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_onboarding_employee_onboarding_make_employee",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.department_approver.department_approver.get_approvers": {
+      "get": {
+        "summary": "get_approvers",
+        "description": "",
+        "operationId": "hrms_hr_doctype_department_approver_department_approver_get_approvers",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "txt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchfield",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_len",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_applicant.job_applicant.create_kanban_board": {
+      "get": {
+        "summary": "create_kanban_board",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_applicant_job_applicant_create_kanban_board",
+        "parameters": [
+          {
+            "name": "board_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_applicant.job_applicant.create_interview": {
+      "get": {
+        "summary": "create_interview · hrms.hr.doctype.job_applicant.job_applicant",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_applicant_job_applicant_create_interview",
+        "parameters": [
+          {
+            "name": "job_applicant",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interview_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_applicant.job_applicant.schedule_interview": {
+      "get": {
+        "summary": "schedule_interview",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_applicant_job_applicant_schedule_interview",
+        "parameters": [
+          {
+            "name": "job_applicant",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interview_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduled_on",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interviewers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_applicant.job_applicant.get_interview_details": {
+      "get": {
+        "summary": "get_interview_details",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_applicant_job_applicant_get_interview_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_applicant.job_applicant.get_applicant_to_hire_percentage": {
+      "get": {
+        "summary": "get_applicant_to_hire_percentage",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_applicant_job_applicant_get_applicant_to_hire_percentage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_adjustment.leave_adjustment.get_leave_allocation_for_posting_date": {
+      "get": {
+        "summary": "get_leave_allocation_for_posting_date",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_adjustment_leave_adjustment_get_leave_allocation_for_posting_date",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_adjustment.leave_adjustment.get_allocated_leave_types": {
+      "get": {
+        "summary": "get_allocated_leave_types",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_adjustment_leave_adjustment_get_allocated_leave_types",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_attendance_tool.employee_attendance_tool.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.hr.doctype.employee_attendance_tool.employee_attendance_tool",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_attendance_tool_employee_attendance_tool_get_employees",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employment_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "designation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employee_grade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter_by_shift",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_attendance_tool.employee_attendance_tool.mark_employee_attendance": {
+      "get": {
+        "summary": "mark_employee_attendance",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_attendance_tool_employee_attendance_tool_mark_employee_attendance",
+        "parameters": [
+          {
+            "name": "employee_list",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leave_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "late_entry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "early_exit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shift",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mark_half_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "half_day_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "half_day_employee_list",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.job_opening.job_opening.get_close_warning": {
+      "get": {
+        "summary": "get_close_warning",
+        "description": "",
+        "operationId": "hrms_hr_doctype_job_opening_job_opening_get_close_warning",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.goal.goal.get_children": {
+      "get": {
+        "summary": "get_children · hrms.hr.doctype.goal.goal",
+        "description": "",
+        "operationId": "hrms_hr_doctype_goal_goal_get_children",
+        "parameters": [
+          {
+            "name": "doctype",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parent",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_root",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "**filters",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.goal.goal.update_progress": {
+      "get": {
+        "summary": "update_progress",
+        "description": "",
+        "operationId": "hrms_hr_doctype_goal_goal_update_progress",
+        "parameters": [
+          {
+            "name": "progress",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "goal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.goal.goal.update_status": {
+      "get": {
+        "summary": "update_status",
+        "description": "",
+        "operationId": "hrms_hr_doctype_goal_goal_update_status",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "goals",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.goal.goal.add_tree_node": {
+      "get": {
+        "summary": "add_tree_node",
+        "description": "",
+        "operationId": "hrms_hr_doctype_goal_goal_add_tree_node",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal.appraisal.set_appraisal_template": {
+      "get": {
+        "summary": "set_appraisal_template",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_appraisal_set_appraisal_template",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal.appraisal.set_kras_and_rating_criteria": {
+      "get": {
+        "summary": "set_kras_and_rating_criteria",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_appraisal_set_kras_and_rating_criteria",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal.appraisal.add_feedback": {
+      "get": {
+        "summary": "add_feedback",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_appraisal_add_feedback",
+        "parameters": [
+          {
+            "name": "feedback",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedback_ratings",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal.appraisal.get_feedback_history": {
+      "get": {
+        "summary": "get_feedback_history",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_appraisal_get_feedback_history",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appraisal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal.appraisal.get_kras_for_employee": {
+      "get": {
+        "summary": "get_kras_for_employee",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_appraisal_get_kras_for_employee",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_referral.employee_referral.create_job_applicant": {
+      "get": {
+        "summary": "create_job_applicant",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_referral_employee_referral_create_job_applicant",
+        "parameters": [
+          {
+            "name": "source_name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_doc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.employee_referral.employee_referral.create_additional_salary": {
+      "get": {
+        "summary": "create_additional_salary",
+        "description": "",
+        "operationId": "hrms_hr_doctype_employee_referral_employee_referral_create_additional_salary",
+        "parameters": [
+          {
+            "name": "employee_referral",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal_cycle.appraisal_cycle.set_employees": {
+      "get": {
+        "summary": "set_employees",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_cycle_appraisal_cycle_set_employees",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal_cycle.appraisal_cycle.create_appraisals": {
+      "get": {
+        "summary": "create_appraisals",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_cycle_appraisal_cycle_create_appraisals",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal_cycle.appraisal_cycle.complete_cycle": {
+      "get": {
+        "summary": "complete_cycle",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_cycle_appraisal_cycle_complete_cycle",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal_cycle.appraisal_cycle.get_appraisal_cycle_summary": {
+      "get": {
+        "summary": "get_appraisal_cycle_summary",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_cycle_appraisal_cycle_get_appraisal_cycle_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.appraisal_cycle.appraisal_cycle.get_employees_without_feedback": {
+      "get": {
+        "summary": "get_employees_without_feedback",
+        "description": "",
+        "operationId": "hrms_hr_doctype_appraisal_cycle_appraisal_cycle_get_employees_without_feedback",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.training_result.training_result.get_employees": {
+      "get": {
+        "summary": "get_employees · hrms.hr.doctype.training_result.training_result",
+        "description": "",
+        "operationId": "hrms_hr_doctype_training_result_training_result_get_employees",
+        "parameters": [
+          {
+            "name": "training_event",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment.create_assignment_for_multiple_employees": {
+      "get": {
+        "summary": "create_assignment_for_multiple_employees",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_policy_assignment_leave_policy_assignment_create_assignment_for_multiple_employees",
+        "parameters": [
+          {
+            "name": "employees",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment.create_assignment": {
+      "get": {
+        "summary": "create_assignment",
+        "description": "",
+        "operationId": "hrms_hr_doctype_leave_policy_assignment_leave_policy_assignment_create_assignment",
+        "parameters": [
+          {
+            "name": "employee",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.dashboard_chart_source.employees_by_age.employees_by_age.get_data": {
+      "get": {
+        "summary": "get_data · hrms.hr.dashboard_chart_source.employees_by_age.employees_by_age",
+        "description": "",
+        "operationId": "hrms_hr_dashboard_chart_source_employees_by_age_employees_by_age_get_data",
+        "parameters": [
+          {
+            "name": "chart_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "chart",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "no_cache",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timespan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "time_interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "heatmap_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.dashboard_chart_source.hiring_vs_attrition_count.hiring_vs_attrition_count.get_data": {
+      "get": {
+        "summary": "get_data · hrms.hr.dashboard_chart_source.hiring_vs_attrition_count.hiring_vs_attrition_count",
+        "description": "",
+        "operationId": "hrms_hr_dashboard_chart_source_hiring_vs_attrition_count_hiring_vs_attrition_count_get_data",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/method/hrms.hr.report.monthly_attendance_sheet.monthly_attendance_sheet.get_attendance_years": {
+      "get": {
+        "summary": "get_attendance_years",
+        "description": "",
+        "operationId": "hrms_hr_report_monthly_attendance_sheet_monthly_attendance_sheet_get_attendance_years",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "UserKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Frappe user API key / token or session cookie."
+      }
+    }
+  }
+}
