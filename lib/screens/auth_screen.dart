@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 
+import 'dart:async';
+
 import '../services/auth_service.dart';
+import '../services/push_notification_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 
@@ -94,6 +97,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       await AuthService.refreshSession();
+      unawaited(PushNotificationService.registerForCurrentUser());
       if (!mounted) return;
       context.go('/welcome');
     } on AuthException catch (e) {
@@ -145,6 +149,7 @@ class _AuthScreenState extends State<AuthScreen> {
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
+      unawaited(PushNotificationService.registerForCurrentUser());
 
       if (!mounted) return;
       context.go('/welcome');

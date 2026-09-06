@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../local_db/sync_job_type.dart';
 import '../services/erp_service.dart';
+import '../services/sync_engine.dart';
+import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../widgets/search_picker.dart';
@@ -382,6 +385,9 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
       _error = null;
     });
 
+    // Declared outside the `try` so `catch` can still reach it to enqueue
+    // an offline job.
+    Map<String, dynamic>? payload;
     try {
       final allocations = _allocations;
       final references = _outstanding
@@ -398,7 +404,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           )
           .toList();
 
-      final payload = Map<String, dynamic>.from(_draftDoc!);
+      payload = Map<String, dynamic>.from(_draftDoc!);
       payload['paid_amount'] = _enteredAmount;
       payload['received_amount'] = _enteredAmount;
       payload['references'] = references;
@@ -411,10 +417,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
         if (treasury.account != null) payload['paid_to'] = treasury.account;
       }
 
-      final created = await ErpService.createDoc('Payment Entry', payload);
-
-      if (!mounted) return true;
-      setState(() {
+      void resetForm() {
         _customer = null;
         _treasury = null;
         _draftDoc = null;
@@ -422,7 +425,30 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
         _selectedKeys.clear();
         _amountController.clear();
         _receiptNumberController.clear();
-      });
+      }
+
+      // كل الحقول هنا مبنية من بيانات محلية بالفعل (`_draftDoc` كان اتحمّل
+      // وقت اختيار العميل) — مفيش أي resolve حي مطلوب وقت الإرسال، فالتحصيل
+      // ده أبسط من الطلبية/الفاتورة في الطابور: مجرد createDoc واحد وبس.
+      if (!SyncStatusService().isOnline) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.paymentEntryCreate,
+          payload: payload,
+        );
+        if (!mounted) return true;
+        setState(resetForm);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
+          ),
+        );
+        return true;
+      }
+
+      final created = await ErpService.createDoc('Payment Entry', payload);
+
+      if (!mounted) return true;
+      setState(resetForm);
 
       if (!mounted) return true;
       final createdName = created['name'] as String?;
@@ -435,6 +461,29 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
       }
       return true;
     } catch (e) {
+      final capturedPayload = payload;
+      if (e is ErpException && e.isConnectivityFailure && capturedPayload != null) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.paymentEntryCreate,
+          payload: capturedPayload,
+        );
+        if (!mounted) return true;
+        setState(() {
+          _customer = null;
+          _treasury = null;
+          _draftDoc = null;
+          _outstanding = [];
+          _selectedKeys.clear();
+          _amountController.clear();
+          _receiptNumberController.clear();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
+          ),
+        );
+        return true;
+      }
       if (!mounted) return false;
       final message = handleErpError(context, e);
       if (message != null) setState(() => _error = message);

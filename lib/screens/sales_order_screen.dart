@@ -953,11 +953,27 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
         // `sales_team` re-resolution (already set at creation) and no form
         // reset/navigation-away: pop back to the detail screen the rep
         // came from so they can then use its "resend" swipe.
-        await ErpService.updateDoc(
-          'Sales Order',
-          editDoc['name'] as String,
-          fields,
-        );
+        final editName = editDoc['name'] as String;
+        if (!SyncStatusService().isOnline) {
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Sales Order',
+              'name': editName,
+              'data': fields,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('لا يوجد اتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
+        await ErpService.updateDoc('Sales Order', editName, fields);
         if (!mounted) return true;
         Navigator.of(context).pop();
         return true;
@@ -1008,6 +1024,26 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     } catch (e) {
       final capturedFields = fields;
       if (e is ErpException && e.isConnectivityFailure && capturedFields != null) {
+        final editDoc = widget.editDoc;
+        if (editDoc != null) {
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Sales Order',
+              'name': editDoc['name'] as String,
+              'data': capturedFields,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تعذر الاتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
         await SyncEngine().enqueue(
           type: SyncJobType.salesOrderCreate,
           payload: capturedFields,

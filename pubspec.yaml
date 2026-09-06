@@ -56,6 +56,8 @@ dependencies:
   connectivity_plus: ^7.3.1
   path_provider: ^2.1.6
   path: ^1.9.1
+  firebase_core: ^4.14.0
+  firebase_messaging: ^16.6.0
 
 dev_dependencies:
   flutter_test:

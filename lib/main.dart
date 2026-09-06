@@ -39,6 +39,14 @@ void main() {
   runApp(const RedErpApp());
 }
 
+/// Deep-links a tapped push notification straight to its document — same
+/// destination the in-app bell (`notifications_screen.dart`) already uses.
+/// `_router` is a plain top-level singleton, so this works from anywhere
+/// (a background FCM callback included) without needing a `BuildContext`.
+void openDocumentFromNotification(String doctype, String name) {
+  _router.push(documentDetailRoute(doctype, name));
+}
+
 final _router = GoRouter(
   initialLocation: '/',
   routes: [

@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import '../local_db/sync_job_type.dart';
 import '../services/erp_service.dart';
+import '../services/sync_engine.dart';
+import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../utils/html_text.dart';
@@ -1116,6 +1119,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       _error = null;
     });
 
+    // Declared outside the `try` (not `final` inside it) so the `catch`
+    // block below can still reach it to enqueue an offline job.
+    Map<String, dynamic>? fields;
     try {
       final locationUrl = await _ensureLocationCaptured();
       if (locationUrl == null) {
@@ -1160,7 +1166,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         };
       }).toList();
 
-      final fields = <String, dynamic>{
+      fields = <String, dynamic>{
         'customer': _customer!.name,
         'items': items,
         if (_deliveryDate != null)
@@ -1182,13 +1188,44 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
 
       final editDoc = widget.editDoc;
       if (editDoc != null) {
-        await ErpService.updateDoc(
-          'Sales Invoice',
-          editDoc['name'] as String,
-          fields,
-        );
+        final editName = editDoc['name'] as String;
+        if (!SyncStatusService().isOnline) {
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Sales Invoice',
+              'name': editName,
+              'data': fields,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('لا يوجد اتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
+        await ErpService.updateDoc('Sales Invoice', editName, fields);
         if (!mounted) return true;
         Navigator.of(context).pop();
+        return true;
+      }
+
+      if (!SyncStatusService().isOnline) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.salesInvoiceCreate,
+          payload: fields,
+        );
+        if (!mounted) return true;
+        setState(_resetInvoiceForm);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — تم الحفظ وستُرسل الفاتورة تلقائيًا'),
+          ),
+        );
         return true;
       }
 
@@ -1203,23 +1240,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       final submittedCustomer = _customer;
 
       if (!mounted) return true;
-      setState(() {
-        _customer = null;
-        _lines.clear();
-        _priceList = null;
-        _creditLimit = null;
-        _creditLimitStatus = null;
-        _priceListStatus = null;
-        _deliveryDate = null;
-        _paymentTerms = null;
-        _termsTemplate = null;
-        _termsController.clear();
-        _paymentScheduleTerms = [];
-        _paymentScheduleStatus = null;
-        _locationStatus = null;
-        _sourceDoc = null;
-        _isReturn = false;
-      });
+      setState(_resetInvoiceForm);
 
       final createdName = created['name'] as String?;
       if (createdName != null) {
@@ -1241,6 +1262,41 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       }
       return true;
     } catch (e) {
+      final editDoc = widget.editDoc;
+      final capturedFields = fields;
+      if (e is ErpException && e.isConnectivityFailure && capturedFields != null) {
+        if (editDoc != null) {
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Sales Invoice',
+              'name': editDoc['name'] as String,
+              'data': capturedFields,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تعذر الاتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
+        await SyncEngine().enqueue(
+          type: SyncJobType.salesInvoiceCreate,
+          payload: capturedFields,
+        );
+        if (!mounted) return true;
+        setState(_resetInvoiceForm);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — تم الحفظ وستُرسل الفاتورة تلقائيًا'),
+          ),
+        );
+        return true;
+      }
       if (!mounted) return false;
       final message = handleErpError(context, e);
       if (message != null) setState(() => _error = message);
@@ -1248,6 +1304,26 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  /// Extracted so both the live-success path and the offline-queued path
+  /// reset the form identically.
+  void _resetInvoiceForm() {
+    _customer = null;
+    _lines.clear();
+    _priceList = null;
+    _creditLimit = null;
+    _creditLimitStatus = null;
+    _priceListStatus = null;
+    _deliveryDate = null;
+    _paymentTerms = null;
+    _termsTemplate = null;
+    _termsController.clear();
+    _paymentScheduleTerms = [];
+    _paymentScheduleStatus = null;
+    _locationStatus = null;
+    _sourceDoc = null;
+    _isReturn = false;
   }
 
   bool get _onAllInvoicesTab => !_isEditing && _tabController.index == 1;

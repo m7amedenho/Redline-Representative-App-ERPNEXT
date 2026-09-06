@@ -172,6 +172,10 @@ class SyncEngine {
     switch (job.jobType) {
       case 'salesOrderCreate':
         return _replaySalesOrderCreate(payload);
+      case 'salesInvoiceCreate':
+        return _replaySalesInvoiceCreate(payload);
+      case 'paymentEntryCreate':
+        return _replayPaymentEntryCreate(payload);
       case 'customerVisitCreate':
         return _replayCustomerVisitCreate(payload);
       case 'materialRequestCreate':
@@ -184,6 +188,8 @@ class SyncEngine {
         return _replayExpenseClaimVehicleLogChain(job, payload);
       case 'photoAttach':
         return _replayPhotoAttach(job, payload);
+      case 'genericApiCall':
+        return _replayGenericApiCall(payload);
       default:
         throw ErpException('نوع عملية غير معروف: ${job.jobType}');
     }
@@ -201,6 +207,38 @@ class SyncEngine {
     }
     final created = await ErpService.createDoc('Sales Order', fields);
     return _ReplayResult('Sales Order', created['name'] as String);
+  }
+
+  /// Financially sensitive by explicit instruction — queued anyway,
+  /// accepting the concurrent-credit-limit risk the plan originally
+  /// carved this out to avoid. `update_stock`/`is_return`/etc. are already
+  /// baked into `payload` from the live screen; only `sales_team` (needs
+  /// `resolveCurrentSalesPerson`) is deferred to here.
+  Future<_ReplayResult> _replaySalesInvoiceCreate(
+    Map<String, dynamic> payload,
+  ) async {
+    final fields = Map<String, dynamic>.from(payload);
+    final salesPerson = await ErpService.resolveCurrentSalesPerson();
+    if (salesPerson != null) {
+      fields['sales_team'] = [
+        {'sales_person': salesPerson, 'allocated_percentage': 100},
+      ];
+    }
+    final created = await ErpService.createDoc('Sales Invoice', fields);
+    return _ReplayResult('Sales Invoice', created['name'] as String);
+  }
+
+  /// Financially sensitive by explicit instruction, same as the invoice
+  /// path — the concurrent-credit-limit conflict risk this reintroduces is
+  /// accepted, not overlooked. Unlike the other create flows, nothing here
+  /// needs live resolution at replay time: the payload is `_draftDoc`
+  /// (already fetched live when the rep picked the customer) plus purely
+  /// local selections, so this is a direct, single `createDoc` call.
+  Future<_ReplayResult> _replayPaymentEntryCreate(
+    Map<String, dynamic> payload,
+  ) async {
+    final created = await ErpService.createDoc('Payment Entry', payload);
+    return _ReplayResult('Payment Entry', created['name'] as String);
   }
 
   Future<_ReplayResult> _replayCustomerVisitCreate(
@@ -249,19 +287,78 @@ class SyncEngine {
     return _ReplayResult(doctype, docname);
   }
 
+  /// Covers every write that doesn't need a live-resolution step first —
+  /// comments, plain document edits, and workflow transitions. Unlike the
+  /// dedicated create flows above, the payload here already contains
+  /// exactly what would have been sent live, captured at the moment the
+  /// rep tapped the action.
+  ///
+  /// `applyWorkflow`'s `doc` snapshot is whatever the document looked like
+  /// AT THAT MOMENT — if it changed through some other path before this
+  /// replays, the transition still runs against the current server-side
+  /// document (Frappe resolves the actual record by name), but the
+  /// snapshot itself won't reflect any such change. No different from
+  /// what a live retry days later would face.
+  Future<_ReplayResult> _replayGenericApiCall(
+    Map<String, dynamic> payload,
+  ) async {
+    final operation = payload['operation'] as String;
+    switch (operation) {
+      case 'create':
+        final doctype = payload['doctype'] as String;
+        final data = Map<String, dynamic>.from(payload['data'] as Map);
+        await _resolveProposedCreditLimit(data);
+        final created = await ErpService.createDoc(doctype, data);
+        return _ReplayResult(doctype, created['name'] as String);
+      case 'update':
+        final doctype = payload['doctype'] as String;
+        final name = payload['name'] as String;
+        final data = Map<String, dynamic>.from(payload['data'] as Map);
+        await _resolveProposedCreditLimit(data);
+        await ErpService.updateDoc(doctype, name, data);
+        return _ReplayResult(doctype, name);
+      case 'submit':
+        final doctype = payload['doctype'] as String;
+        final name = payload['name'] as String;
+        await ErpService.submitDoc(doctype, name);
+        return _ReplayResult(doctype, name);
+      case 'applyWorkflow':
+        final doctype = payload['doctype'] as String;
+        final name = payload['name'] as String;
+        final action = payload['action'] as String;
+        final docJson = payload['doc'] as String;
+        await ErpService.callMethodPost(
+          '/api/method/frappe.model.workflow.apply_workflow',
+          params: {'doc': docJson, 'action': action},
+        );
+        return _ReplayResult(doctype, name);
+      default:
+        throw ErpException('عملية غير معروفة: $operation');
+    }
+  }
+
+  /// Both Customer creation AND edits can carry a `_proposedCreditLimit`
+  /// marker (set by the screen instead of the real `credit_limits` field
+  /// when queued offline, since resolving the company needs a live call) —
+  /// shared so the generic `create`/`update` replay path handles a queued
+  /// customer edit's credit limit exactly the same way as a queued
+  /// creation's.
+  Future<void> _resolveProposedCreditLimit(Map<String, dynamic> body) async {
+    final proposedLimit = body.remove('_proposedCreditLimit') as num?;
+    if (proposedLimit == null || proposedLimit <= 0) return;
+    final company = await ErpService.resolveDefaultCompany();
+    if (company != null) {
+      body['credit_limits'] = [
+        {'company': company, 'credit_limit': proposedLimit},
+      ];
+    }
+  }
+
   Future<_ReplayResult> _replayCustomerRegistrationCreate(
     Map<String, dynamic> payload,
   ) async {
     final body = Map<String, dynamic>.from(payload);
-    final proposedLimit = body.remove('_proposedCreditLimit') as num?;
-    if (proposedLimit != null && proposedLimit > 0) {
-      final company = await ErpService.resolveDefaultCompany();
-      if (company != null) {
-        body['credit_limits'] = [
-          {'company': company, 'credit_limit': proposedLimit},
-        ];
-      }
-    }
+    await _resolveProposedCreditLimit(body);
 
     final currentUserId = await AuthService.currentUserId();
     if (currentUserId != null) body['account_manager'] = currentUserId;
@@ -318,6 +415,23 @@ class SyncEngine {
     if (defaults.costCenter != null) body['cost_center'] = defaults.costCenter;
   }
 
+  /// Mirrors the live screens' own `_postNoteIfAny` — best-effort, never
+  /// lets a failed comment post fail the whole job (the document it would
+  /// attach to has already been created/submitted by this point).
+  Future<void> _postNoteIfAny(String doctype, String name, Object? note) async {
+    if (note is! String || note.trim().isEmpty) return;
+    try {
+      await ErpService.createDoc('Comment', {
+        'comment_type': 'Comment',
+        'reference_doctype': doctype,
+        'reference_name': name,
+        'content': note.trim(),
+      });
+    } catch (_) {
+      // Best-effort, same as the live path.
+    }
+  }
+
   Future<_ReplayResult> _replayExpenseClaimPersonalCreate(
     Map<String, dynamic> payload,
   ) async {
@@ -347,6 +461,7 @@ class SyncEngine {
 
     final created = await ErpService.createDoc('Expense Claim', body);
     final createdName = created['name'] as String;
+    await _postNoteIfAny('Expense Claim', createdName, payload['note']);
     await ErpService.submitDoc('Expense Claim', createdName);
     return _ReplayResult('Expense Claim', createdName);
   }
@@ -391,6 +506,7 @@ class SyncEngine {
       final createdLog = await ErpService.createDoc('Vehicle Log', body);
       logName = createdLog['name'] as String;
       await _checkpoint(job.id, {'vehicleLogName': logName});
+      await _postNoteIfAny('Vehicle Log', logName, payload['note']);
 
       try {
         await ErpService.submitDoc('Vehicle Log', logName);

@@ -350,7 +350,34 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (confirmed != true) return;
 
     setState(() => _applyingAction = true);
+
+    Future<void> queueOffline() async {
+      await SyncEngine().enqueue(
+        type: SyncJobType.genericApiCall,
+        payload: {
+          'operation': 'applyWorkflow',
+          'doctype': widget.doctype,
+          'name': widget.name,
+          'doc': jsonEncode(doc),
+          'action': action,
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'لا يوجد اتصال — سيُنفَّذ "$action" تلقائيًا عند توفر الاتصال',
+          ),
+        ),
+      );
+    }
+
     try {
+      if (!SyncStatusService().isOnline) {
+        await queueOffline();
+        return;
+      }
+
       final updated = await ErpService.callMethodPost(
         '/api/method/frappe.model.workflow.apply_workflow',
         params: {'doc': jsonEncode(doc), 'action': action},
@@ -362,6 +389,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       if (updated.isNotEmpty) setState(() => _doc = updated);
       await _loadTransitions();
     } catch (e) {
+      if (e is ErpException && e.isConnectivityFailure) {
+        await queueOffline();
+        return;
+      }
       if (!mounted) return;
       final message = handleErpError(context, e);
       if (message == null) return;
@@ -546,18 +577,60 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     // Was previously missing entirely — the request (up to the 25s hard
     // timeout in ErpService) ran with zero visual feedback, which read as
     // the app hanging even though it was just waiting on the network.
+    final discountData = {
+      'additional_discount_percentage': percent,
+      'discount_amount': amount,
+    };
+
     setState(() => _editingDiscount = true);
     try {
-      final updated = await ErpService.updateDoc(widget.doctype, widget.name, {
-        'additional_discount_percentage': percent,
-        'discount_amount': amount,
-      });
+      if (!SyncStatusService().isOnline) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'update',
+            'doctype': widget.doctype,
+            'name': widget.name,
+            'data': discountData,
+          },
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — سيُحفظ الخصم تلقائيًا'),
+          ),
+        );
+        return;
+      }
+      final updated = await ErpService.updateDoc(
+        widget.doctype,
+        widget.name,
+        discountData,
+      );
       if (!mounted) return;
       setState(() => _doc = updated.isNotEmpty ? updated : _doc);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('تم تحديث الخصم بنجاح')));
     } catch (e) {
+      if (e is ErpException && e.isConnectivityFailure) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'update',
+            'doctype': widget.doctype,
+            'name': widget.name,
+            'data': discountData,
+          },
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — سيُحفظ الخصم تلقائيًا'),
+          ),
+        );
+        return;
+      }
       if (!mounted) return;
       final message = handleErpError(context, e);
       if (message == null) return;
@@ -1072,23 +1145,62 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     if (confirmed != true) return;
 
     setState(() => _editingItemIndex = index);
-    try {
-      final items = (doc['items'] as List)
-          .whereType<Map>()
-          .map((i) => Map<String, dynamic>.from(i))
-          .toList();
-      items[index]['discount_percentage'] = percent;
-      items[index]['rate'] = priceListRate * (1 - percent / 100);
+    final items = (doc['items'] as List)
+        .whereType<Map>()
+        .map((i) => Map<String, dynamic>.from(i))
+        .toList();
+    items[index]['discount_percentage'] = percent;
+    items[index]['rate'] = priceListRate * (1 - percent / 100);
+    final itemsData = {'items': items};
 
-      final updated = await ErpService.updateDoc(widget.doctype, widget.name, {
-        'items': items,
-      });
+    try {
+      if (!SyncStatusService().isOnline) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'update',
+            'doctype': widget.doctype,
+            'name': widget.name,
+            'data': itemsData,
+          },
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — سيُحفظ خصم الصنف تلقائيًا'),
+          ),
+        );
+        return;
+      }
+      final updated = await ErpService.updateDoc(
+        widget.doctype,
+        widget.name,
+        itemsData,
+      );
       if (!mounted) return;
       setState(() => _doc = updated.isNotEmpty ? updated : _doc);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('تم تحديث خصم الصنف بنجاح')));
     } catch (e) {
+      if (e is ErpException && e.isConnectivityFailure) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'update',
+            'doctype': widget.doctype,
+            'name': widget.name,
+            'data': itemsData,
+          },
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — سيُحفظ خصم الصنف تلقائيًا'),
+          ),
+        );
+        return;
+      }
       if (!mounted) return;
       final message = handleErpError(context, e);
       if (message == null) return;
@@ -1181,8 +1293,35 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       }
     }
 
+    final commentData = {
+      'comment_type': 'Comment',
+      'reference_doctype': widget.doctype,
+      'reference_name': widget.name,
+      'content': text,
+    };
+
     setState(() => _sendingComment = true);
     try {
+      if (!SyncStatusService().isOnline) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'create',
+            'doctype': 'Comment',
+            'data': commentData,
+          },
+        );
+        if (!mounted) return;
+        _commentController.clear();
+        _pickedMentions.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — سيُرسل التعليق تلقائيًا'),
+          ),
+        );
+        return;
+      }
+
       // Plain REST create instead of `frappe.desk.form.utils.add_comment` —
       // that RPC lives under the `frappe.desk` namespace and was getting
       // rejected with PermissionError for accounts without Desk Access,
@@ -1190,17 +1329,31 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       // security decision, not something to work around). A normal
       // `/api/resource/Comment` create only needs Create permission on the
       // Comment DocType itself, same as everything else in this app.
-      await ErpService.createDoc('Comment', {
-        'comment_type': 'Comment',
-        'reference_doctype': widget.doctype,
-        'reference_name': widget.name,
-        'content': text,
-      });
+      await ErpService.createDoc('Comment', commentData);
       if (!mounted) return;
       _commentController.clear();
       _pickedMentions.clear();
       await _loadComments();
     } catch (e) {
+      if (e is ErpException && e.isConnectivityFailure) {
+        await SyncEngine().enqueue(
+          type: SyncJobType.genericApiCall,
+          payload: {
+            'operation': 'create',
+            'doctype': 'Comment',
+            'data': commentData,
+          },
+        );
+        if (!mounted) return;
+        _commentController.clear();
+        _pickedMentions.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — سيُرسل التعليق تلقائيًا'),
+          ),
+        );
+        return;
+      }
       if (!mounted) return;
       final message = handleErpError(context, e);
       if (message == null) return;

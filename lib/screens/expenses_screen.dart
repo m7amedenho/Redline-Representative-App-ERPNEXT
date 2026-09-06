@@ -411,6 +411,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       'expenseDate': today,
       'modeOfPayment': treasury.modeOfPayment,
       'account': treasury.account,
+      'note': _notesController.text.trim(),
     };
 
     Future<bool> queueOffline() async {
@@ -640,6 +641,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           'expenseDate': today,
           'modeOfPayment': treasury.modeOfPayment,
           'account': treasury.account,
+          'note': _notesController.text.trim(),
         },
       );
       if (!mounted) return true;

@@ -390,10 +390,34 @@ class _CustomerRegistrationScreenState
 
       final editDoc = widget.editDoc;
       if (editDoc != null) {
-        // Edits stay online-only — not part of the offline queue design.
+        final editName = editDoc['name'] as String;
         final proposedLimit = double.tryParse(
           _creditLimitController.text.trim(),
         );
+
+        if (!SyncStatusService().isOnline) {
+          if (proposedLimit != null && proposedLimit > 0) {
+            body['_proposedCreditLimit'] = proposedLimit;
+          }
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Customer',
+              'name': editName,
+              'data': body,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('لا يوجد اتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
+
         if (proposedLimit != null && proposedLimit > 0) {
           final company = await ErpService.resolveDefaultCompany();
           if (company != null) {
@@ -402,7 +426,7 @@ class _CustomerRegistrationScreenState
             ];
           }
         }
-        await ErpService.updateDoc('Customer', editDoc['name'] as String, body);
+        await ErpService.updateDoc('Customer', editName, body);
         if (!mounted) return true;
         Navigator.of(context).pop();
         return true;
@@ -469,7 +493,27 @@ class _CustomerRegistrationScreenState
       return true;
     } catch (e) {
       final capturedBody = body;
-      if (e is ErpException && e.isConnectivityFailure && capturedBody != null && widget.editDoc == null) {
+      if (e is ErpException && e.isConnectivityFailure && capturedBody != null) {
+        final editDoc = widget.editDoc;
+        if (editDoc != null) {
+          await SyncEngine().enqueue(
+            type: SyncJobType.genericApiCall,
+            payload: {
+              'operation': 'update',
+              'doctype': 'Customer',
+              'name': editDoc['name'] as String,
+              'data': capturedBody,
+            },
+          );
+          if (!mounted) return true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تعذر الاتصال — سيُحفظ التعديل تلقائيًا'),
+            ),
+          );
+          Navigator.of(context).pop();
+          return true;
+        }
         await SyncEngine().enqueue(
           type: SyncJobType.customerRegistrationCreate,
           payload: capturedBody,
