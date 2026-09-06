@@ -26,6 +26,8 @@ class SwipeToConfirmButton extends StatefulWidget {
     required this.onConfirmed,
     this.confirmedLabel = 'تم التأكيد',
     this.failedLabel = 'حدث خطأ، حاول مرة أخرى',
+    this.queuedLabel = 'محفوظ محليًا — سيُرسل عند توفر الاتصال',
+    this.wasQueued,
     this.height = 64,
     this.autoResetAfter,
   });
@@ -34,11 +36,28 @@ class SwipeToConfirmButton extends StatefulWidget {
   final String label;
 
   /// Text shown once the swipe completes AND the operation actually
-  /// succeeded.
+  /// succeeded (sent to and confirmed by the server).
   final String confirmedLabel;
 
   /// Text shown briefly (red) when the operation fails.
   final String failedLabel;
+
+  /// Text shown (gray, not green) when [onConfirmed] succeeded but
+  /// [wasQueued] says it was only saved to the offline queue, not actually
+  /// sent — see that callback's doc comment.
+  final String queuedLabel;
+
+  /// Called once, immediately after [onConfirmed] resolves to `true` —
+  /// return `true` if that success was really "saved to the local queue
+  /// offline" rather than "confirmed by the server". Distinguishes the two
+  /// so a rep never mistakes a queued save for one the server has actually
+  /// seen: gray+[queuedLabel] instead of green+[confirmedLabel]. The real
+  /// green confirmation for a queued item happens later, on the sync queue
+  /// screen, once it actually uploads — this button's own state doesn't
+  /// live-track that (the form is usually already reset/reused by then).
+  /// Leave null for actions that are never queued (edits, comments,
+  /// workflow actions, or anything genuinely online-only).
+  final bool Function()? wasQueued;
 
   /// Called once the handle reaches the end of the track — must resolve to
   /// `true` on real success, `false` on failure. A thrown exception is
@@ -68,6 +87,7 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 
   double _progress = 0; // 0 = handle at start (right), 1 = reached end (left)
   bool _confirmed = false;
+  bool _confirmedWasQueued = false;
   bool _confirming = false;
   bool _failed = false;
 
@@ -131,9 +151,11 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
     if (!mounted) return;
 
     if (success) {
+      final queued = widget.wasQueued?.call() ?? false;
       setState(() {
         _confirming = false;
         _confirmed = true;
+        _confirmedWasQueued = queued;
       });
       final resetAfter = widget.autoResetAfter;
       if (resetAfter != null) {
@@ -141,6 +163,7 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
           if (!mounted) return;
           setState(() {
             _confirmed = false;
+            _confirmedWasQueued = false;
             _progress = 0;
           });
         });
@@ -182,7 +205,9 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 
         final semanticsLabel = _failed
             ? widget.failedLabel
-            : (_confirmed ? widget.confirmedLabel : widget.label);
+            : (_confirmed
+                  ? (_confirmedWasQueued ? widget.queuedLabel : widget.confirmedLabel)
+                  : widget.label);
 
         return Semantics(
           label: semanticsLabel,
@@ -197,7 +222,9 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
 
   Color get _trackColor {
     if (_failed) return AppColors.accent;
-    if (_confirmed) return AppColors.success;
+    if (_confirmed) {
+      return _confirmedWasQueued ? AppColors.midGray : AppColors.success;
+    }
     return AppColors.black;
   }
 
@@ -253,12 +280,17 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  widget.confirmedLabel,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Text(
+                    _confirmedWasQueued
+                        ? widget.queuedLabel
+                        : widget.confirmedLabel,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -336,7 +368,9 @@ class _SwipeToConfirmButtonState extends State<SwipeToConfirmButton>
                                   ? Icons.close_rounded
                                   : Icons.chevron_right_rounded),
                         color: _confirmed
-                            ? AppColors.success
+                            ? (_confirmedWasQueued
+                                  ? AppColors.midGray
+                                  : AppColors.success)
                             : (_failed ? AppColors.accent : AppColors.white),
                         size: 28,
                       ),

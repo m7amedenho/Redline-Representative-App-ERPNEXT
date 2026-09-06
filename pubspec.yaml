@@ -86,6 +86,9 @@ flutter:
   assets:
     - assets/logo.svg
     - assets/Falling Parcel.svg
+    - assets/Drones isometric Lottie animation.svg
+    - assets/Delivery car logistic.gif
+    - assets/Loading.gif
     - assets/fonts/IBMPlexSansArabic-Regular.ttf
     - assets/fonts/IBMPlexSansArabic-Bold.ttf
 

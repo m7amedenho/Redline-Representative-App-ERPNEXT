@@ -122,6 +122,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
 
   bool _loadingPartyDetails = false;
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
 
   @override
@@ -212,7 +213,21 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
   /// a real test. Trust the server's permission engine, same as everywhere
   /// else in this app.
   Future<void> _pickCustomer() async {
-    final territories = await ErpService.getExpandedUserTerritories();
+    List<String> territories;
+    try {
+      territories = await ErpService.getExpandedUserTerritories();
+    } catch (_) {
+      // No cached territories yet AND no connection right now — must NOT
+      // open the picker with an unscoped filter (would show every
+      // customer, not just this rep's own territory).
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     String? territoryFilter;
 
@@ -905,6 +920,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     // Declared outside the `try` (not `final` inside it) so the `catch`
@@ -964,6 +980,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
               'data': fields,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -984,6 +1001,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           type: SyncJobType.salesOrderCreate,
           payload: fields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(_resetOrderForm);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1035,6 +1053,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
               'data': capturedFields,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1048,6 +1067,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           type: SyncJobType.salesOrderCreate,
           payload: capturedFields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(_resetOrderForm);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1518,6 +1538,7 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                       label: 'اسحب لحفظ الطلبية',
                       confirmedLabel: 'تم الحفظ',
                       onConfirmed: _submit,
+                      wasQueued: () => _lastSubmitWasQueued,
                     ),
                   ),
                 ),

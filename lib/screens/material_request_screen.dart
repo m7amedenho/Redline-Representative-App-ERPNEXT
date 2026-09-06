@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/row_sync_icon.dart';
 import '../widgets/search_picker.dart';
 import '../widgets/swipe_to_confirm_button.dart';
 import 'document_detail_screen.dart';
@@ -67,10 +69,12 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
   // محتاجة تأكيد استلام (الخطوة الثانية، `custom_is_received`).
   List<Map<String, dynamic>> _pendingTransfers = [];
   bool _loadingPending = false;
+  bool _pendingFromCache = false;
   String? _pendingError;
   String? _receivingName;
 
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
 
   @override
@@ -102,23 +106,40 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         });
         return;
       }
-      final rows = await ErpService.getList(
-        'Stock Entry',
-        filters: [
-          ['custom_sales_rep', '=', salesPerson],
-          ['custom_is_received', '=', 0],
-          ['docstatus', '=', 1],
-        ],
-        fields: const ['name', 'posting_date'],
-        limit: 50,
+      final result = await CacheService.getListStaleWhileRevalidate(
+        cacheDoctype: 'Stock Entry_pending_transfers',
+        cacheKey: salesPerson,
+        onCacheHit: (cached) {
+          if (!mounted) return;
+          setState(() {
+            _pendingTransfers = cached.rows;
+            _pendingFromCache = true;
+            _loadingPending = false;
+          });
+        },
+        fetch: () => ErpService.getList(
+          'Stock Entry',
+          filters: [
+            ['custom_sales_rep', '=', salesPerson],
+            ['custom_is_received', '=', 0],
+            ['docstatus', '=', 1],
+          ],
+          fields: const ['name', 'posting_date'],
+          limit: 50,
+        ),
       );
       if (!mounted) return;
       setState(() {
-        _pendingTransfers = rows;
+        _pendingTransfers = result.rows;
+        _pendingFromCache = result.fromCache;
         _loadingPending = false;
       });
     } catch (e) {
       if (!mounted) return;
+      if (_pendingTransfers.isNotEmpty) {
+        setState(() => _loadingPending = false);
+        return;
+      }
       final message = handleErpError(context, e);
       setState(() {
         _loadingPending = false;
@@ -270,6 +291,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     final fields = {
@@ -286,6 +308,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
           type: SyncJobType.materialRequestCreate,
           payload: fields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(() => _lines.clear());
         ScaffoldMessenger.of(context).showSnackBar(
@@ -316,6 +339,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
           type: SyncJobType.materialRequestCreate,
           payload: fields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(() => _lines.clear());
         ScaffoldMessenger.of(context).showSnackBar(
@@ -545,6 +569,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                 label: 'اسحب لإرسال طلب المواد',
                 confirmedLabel: 'تم إرسال الطلب',
                 onConfirmed: _submitRequest,
+                wasQueued: () => _lastSubmitWasQueued,
               ),
             ),
           ),
@@ -699,6 +724,8 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                           ],
                         ),
                       ),
+                      RowSyncIcon(fromCache: _pendingFromCache),
+                      const SizedBox(width: 10),
                       FilledButton(
                         onPressed: receiving
                             ? null

@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
 /// Transition action names this app never wants to auto-pick for bulk
@@ -32,9 +34,18 @@ class _DoctypeConfig {
 
 const _doctypeConfigs = <String, _DoctypeConfig>{
   'Customer': _DoctypeConfig('عميل', ['customer_name'], null),
-  'Sales Order': _DoctypeConfig('طلبية مبيعات', ['customer_name', 'customer'], 'grand_total'),
-  'Sales Invoice': _DoctypeConfig('فاتورة مبيعات', ['customer_name', 'customer'], 'grand_total'),
-  'Payment Entry': _DoctypeConfig('تحصيل', ['party_name', 'party'], 'paid_amount'),
+  'Sales Order': _DoctypeConfig('طلبية مبيعات', [
+    'customer_name',
+    'customer',
+  ], 'grand_total'),
+  'Sales Invoice': _DoctypeConfig('فاتورة مبيعات', [
+    'customer_name',
+    'customer',
+  ], 'grand_total'),
+  'Payment Entry': _DoctypeConfig('تحصيل', [
+    'party_name',
+    'party',
+  ], 'paid_amount'),
   'Material Request': _DoctypeConfig('طلب مواد', [], null),
   'Stock Entry': _DoctypeConfig('حركة مخزون', [], null),
   'Expense Claim': _DoctypeConfig('مصروف', [], null),
@@ -66,6 +77,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
   String? _selectedState;
   List<Map<String, dynamic>> _results = [];
   bool _loadingResults = false;
+  bool _fromCache = false;
 
   String? _error;
 
@@ -121,30 +133,47 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
 
     try {
       final config = _doctypeConfigs[doctype]!;
-      final list = await ErpService.getList(
-        doctype,
-        filters: [
-          ['workflow_state', '=', state],
-        ],
-        fields: [
-          'name',
-          'workflow_state',
-          'modified',
-          ...config.subtitleFields,
-          if (config.amountField != null) config.amountField!,
-        ],
-        orderBy: 'modified desc',
-        limit: 50,
+      final result = await CacheService.getListStaleWhileRevalidate(
+        cacheDoctype: '${doctype}_pending_list',
+        cacheKey: state,
+        onCacheHit: (cached) {
+          if (!mounted) return;
+          setState(() {
+            _results = cached.rows;
+            _fromCache = true;
+            _loadingResults = false;
+          });
+        },
+        fetch: () => ErpService.getList(
+          doctype,
+          filters: [
+            ['workflow_state', '=', state],
+          ],
+          fields: [
+            'name',
+            'workflow_state',
+            'modified',
+            ...config.subtitleFields,
+            if (config.amountField != null) config.amountField!,
+          ],
+          orderBy: 'modified desc',
+          limit: 50,
+        ),
       );
       if (!mounted) return;
       setState(() {
-        _results = list;
-        if (list.isEmpty) {
+        _results = result.rows;
+        _fromCache = result.fromCache;
+        if (result.rows.isEmpty) {
           _error = 'لا توجد مستندات بهذه الحالة حاليًا';
         }
       });
     } catch (e) {
       if (!mounted) return;
+      if (_results.isNotEmpty) {
+        setState(() => _loadingResults = false);
+        return;
+      }
       setState(() => _error = 'تعذر جلب المستندات: $e');
     } finally {
       if (mounted) setState(() => _loadingResults = false);
@@ -167,9 +196,13 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
         title: const Text('موافقة جماعية'),
-        content: Text('هل أنت متأكد من الموافقة على ${_selectedNames.length} مستند؟'),
+        content: Text(
+          'هل أنت متأكد من الموافقة على ${_selectedNames.length} مستند؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -177,7 +210,13 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('تأكيد', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'تأكيد',
+              style: TextStyle(
+                color: AppColors.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -241,47 +280,30 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       backgroundColor: AppColors.lightGray,
       appBar: AppBar(title: const Text('بانتظار موافقتي')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text('نوع المستند', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _doctypeConfigs.entries.map((entry) {
-                final selected = entry.key == _doctype;
-                return ChoiceChip(
-                  label: Text(entry.value.label),
-                  selected: selected,
-                  onSelected: (_) => _pickDoctype(entry.key),
-                  selectedColor: AppColors.accent,
-                  labelStyle: TextStyle(
-                    color: selected ? AppColors.white : AppColors.black,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  backgroundColor: AppColors.white,
-                );
-              }).toList(),
-            ),
-            if (_loadingStates) ...[
-              const SizedBox(height: 20),
-              const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
+        child: RefreshIndicator(
+          color: AppColors.accent,
+          onRefresh: () async {
+            final state = _selectedState;
+            if (state != null) await _pickState(state);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            children: [
+              const Text(
+                'نوع المستند',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
-            ] else if (_states.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text('الحالة', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _states.map((state) {
-                  final selected = state == _selectedState;
+                children: _doctypeConfigs.entries.map((entry) {
+                  final selected = entry.key == _doctype;
                   return ChoiceChip(
-                    label: Text(state),
+                    label: Text(entry.value.label),
                     selected: selected,
-                    onSelected: (_) => _pickState(state),
+                    onSelected: (_) => _pickDoctype(entry.key),
                     selectedColor: AppColors.accent,
                     labelStyle: TextStyle(
                       color: selected ? AppColors.white : AppColors.black,
@@ -291,147 +313,199 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                   );
                 }).toList(),
               ),
-            ],
-            const SizedBox(height: 24),
-            if (_loadingResults)
-              const Center(child: CircularProgressIndicator(color: AppColors.accent))
-            else if (_error != null)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
+              if (_loadingStates) ...[
+                const SizedBox(height: 20),
+                const Center(
+                  child: CircularProgressIndicator(color: AppColors.accent),
                 ),
-                child: Center(
-                  child: Text(
-                    _error!,
-                    style: const TextStyle(color: AppColors.midGray),
-                    textAlign: TextAlign.center,
-                  ),
+              ] else if (_states.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                const Text(
+                  'الحالة',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
-              )
-            else ...[
-              if (_results.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => setState(() {
-                          if (_selectedNames.length == _results.length) {
-                            _selectedNames.clear();
-                          } else {
-                            _selectedNames
-                              ..clear()
-                              ..addAll(_results.map((d) => d['name'] as String));
-                          }
-                        }),
-                        icon: Icon(
-                          _selectedNames.length == _results.length
-                              ? Icons.check_box_rounded
-                              : Icons.check_box_outline_blank_rounded,
-                          size: 18,
-                        ),
-                        label: Text('تحديد الكل (${_results.length})'),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _states.map((state) {
+                    final selected = state == _selectedState;
+                    return ChoiceChip(
+                      label: Text(state),
+                      selected: selected,
+                      onSelected: (_) => _pickState(state),
+                      selectedColor: AppColors.accent,
+                      labelStyle: TextStyle(
+                        color: selected ? AppColors.white : AppColors.black,
+                        fontWeight: FontWeight.w700,
                       ),
-                      const Spacer(),
-                      if (_selectedNames.isNotEmpty)
-                        FilledButton.icon(
-                          onPressed: _bulkApproving ? null : _bulkApprove,
-                          icon: _bulkApproving
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.done_all_rounded, size: 16),
-                          label: Text(
-                            _bulkApproving
-                                ? 'جاري التنفيذ...'
-                                : 'موافقة على المحدد (${_selectedNames.length})',
-                          ),
-                        ),
-                    ],
-                  ),
+                      backgroundColor: AppColors.white,
+                    );
+                  }).toList(),
                 ),
-              ..._results.map((doc) {
-                final doctype = _doctype!;
-                final config = _doctypeConfigs[doctype]!;
-                final name = doc['name'] as String;
-                String subtitle = doctype;
-                for (final field in config.subtitleFields) {
-                  final value = doc[field] as String?;
-                  if (value != null && value.isNotEmpty) {
-                    subtitle = value;
-                    break;
-                  }
-                }
-                final amount = config.amountField != null ? doc[config.amountField] : null;
-                final selected = _selectedNames.contains(name);
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
+              ],
+              const SizedBox(height: 24),
+              if (_loadingResults)
+                const Center(
+                  child: CircularProgressIndicator(color: AppColors.accent),
+                )
+              else if (_error != null)
+                Container(
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: InkWell(
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.midGray),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              else ...[
+                if (_results.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => setState(() {
+                            if (_selectedNames.length == _results.length) {
+                              _selectedNames.clear();
+                            } else {
+                              _selectedNames
+                                ..clear()
+                                ..addAll(
+                                  _results.map((d) => d['name'] as String),
+                                );
+                            }
+                          }),
+                          icon: Icon(
+                            _selectedNames.length == _results.length
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            size: 18,
+                          ),
+                          label: Text('تحديد الكل (${_results.length})'),
+                        ),
+                        const Spacer(),
+                        if (_selectedNames.isNotEmpty)
+                          FilledButton.icon(
+                            onPressed: _bulkApproving ? null : _bulkApprove,
+                            icon: _bulkApproving
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.done_all_rounded, size: 16),
+                            label: Text(
+                              _bulkApproving
+                                  ? 'جاري التنفيذ...'
+                                  : 'موافقة على المحدد (${_selectedNames.length})',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ..._results.map((doc) {
+                  final doctype = _doctype!;
+                  final config = _doctypeConfigs[doctype]!;
+                  final name = doc['name'] as String;
+                  String subtitle = doctype;
+                  for (final field in config.subtitleFields) {
+                    final value = doc[field] as String?;
+                    if (value != null && value.isNotEmpty) {
+                      subtitle = value;
+                      break;
+                    }
+                  }
+                  final amount = config.amountField != null
+                      ? doc[config.amountField]
+                      : null;
+                  final selected = _selectedNames.contains(name);
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(AppRadius.card),
-                      onTap: () => context.push(documentDetailRoute(doctype, name)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: selected,
-                              activeColor: AppColors.accent,
-                              onChanged: (checked) => setState(() {
-                                if (checked == true) {
-                                  _selectedNames.add(name);
-                                } else {
-                                  _selectedNames.remove(name);
-                                }
-                              }),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    subtitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: AppColors.midGray, fontSize: 12),
-                                  ),
-                                ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        onTap: () =>
+                            context.push(documentDetailRoute(doctype, name)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: selected,
+                                activeColor: AppColors.accent,
+                                onChanged: (checked) => setState(() {
+                                  if (checked == true) {
+                                    _selectedNames.add(name);
+                                  } else {
+                                    _selectedNames.remove(name);
+                                  }
+                                }),
                               ),
-                            ),
-                            if (amount != null)
-                              Text(
-                                '$amount',
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      subtitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.midGray,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
-                          ],
+                              if (amount != null)
+                                Text(
+                                  '$amount',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              const SizedBox(width: 6),
+                              RowSyncIcon(fromCache: _fromCache),
+                              const Icon(
+                                Icons.chevron_left_rounded,
+                                color: AppColors.midGray,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

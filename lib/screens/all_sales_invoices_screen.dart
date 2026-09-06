@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/doc_status.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
 /// All Sales Invoices, newest-first — the "كل الفواتير" tab on
@@ -27,6 +29,7 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
   bool _loading = true;
   String? _error;
 
+  bool _fromCache = false;
   List<String> _workflowStates = [];
   String? _stateFilter;
   final _searchController = TextEditingController();
@@ -71,26 +74,42 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
       _error = null;
     });
     try {
-      final list = await ErpService.getList(
-        'Sales Invoice',
-        fields: const [
-          'name',
-          'customer_name',
-          'customer',
-          'grand_total',
-          'outstanding_amount',
-          'workflow_state',
-          'status',
-          'docstatus',
-          'modified',
-        ],
-        orderBy: 'modified desc',
-        limit: 100,
+      final result = await CacheService.getListStaleWhileRevalidate(
+        cacheDoctype: 'Sales Invoice_list',
+        cacheKey: 'recent',
+        onCacheHit: (cached) {
+          if (!mounted) return;
+          setState(() {
+            _invoices = cached.rows;
+            _fromCache = true;
+            _loading = false;
+          });
+        },
+        fetch: () => ErpService.getList(
+          'Sales Invoice',
+          fields: const [
+            'name',
+            'customer_name',
+            'customer',
+            'grand_total',
+            'outstanding_amount',
+            'workflow_state',
+            'status',
+            'docstatus',
+            'modified',
+          ],
+          orderBy: 'modified desc',
+          limit: 100,
+        ),
       );
       if (!mounted) return;
-      setState(() => _invoices = list);
+      setState(() {
+        _invoices = result.rows;
+        _fromCache = result.fromCache;
+      });
     } catch (e) {
       if (!mounted) return;
+      if (_invoices.isNotEmpty) return;
       setState(() => _error = 'تعذر جلب الفواتير: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -257,7 +276,14 @@ class _AllSalesInvoicesScreenState extends State<AllSalesInvoicesScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                _statusPill(status.label, status.color),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    RowSyncIcon(fromCache: _fromCache),
+                                    const SizedBox(width: 6),
+                                    _statusPill(status.label, status.color),
+                                  ],
+                                ),
                                 if (paymentStatus != null) ...[
                                   const SizedBox(height: 4),
                                   _statusPill(

@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
 class _CustomerRow {
@@ -49,6 +51,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   List<String> _availableTerritories = const [];
   Set<String> _selectedTerritories = {};
+  bool _fromCache = false;
 
   @override
   void initState() {
@@ -59,8 +62,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
   Future<void> _init() async {
     try {
       _availableTerritories = await ErpService.getExpandedUserTerritories();
-    } catch (_) {
-      _availableTerritories = const [];
+    } catch (e) {
+      // Genuinely unresolved (no cache yet AND no connection right now) —
+      // must NOT fall through to `_search('')` with an empty territory
+      // list, since an empty list there reads as "no filter" and would
+      // show every customer in the system, not just this rep's own
+      // territory (a confirmed real bug on a weak connection before this
+      // was fixed at the `ErpService` layer).
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت وحاول مرة أخرى';
+      });
+      return;
     }
     if (mounted) {
       setState(() {});
@@ -83,10 +97,27 @@ class _CustomersScreenState extends State<CustomersScreen> {
   /// المناطق المستخدمة فعليًا في الاستعلام: اختيار المستخدم اليدوي لو موجود،
   /// وإلا كل مناطقه — مفيش حالة "بلا فلتر خالص" أبدًا طالما عنده منطقة واحدة
   /// على الأقل (نفس فلسفة بيكرات العميل التانية في التطبيق).
-  List<String> get _effectiveTerritories =>
-      _selectedTerritories.isNotEmpty
-          ? _selectedTerritories.toList()
-          : _availableTerritories;
+  List<String> get _effectiveTerritories => _selectedTerritories.isNotEmpty
+      ? _selectedTerritories.toList()
+      : _availableTerritories;
+
+  void _applyRows(List<Map<String, dynamic>> rows, bool fromCache) {
+    if (!mounted) return;
+    setState(() {
+      _results = rows
+          .map(
+            (c) => _CustomerRow(
+              name: c['name'] as String,
+              label: (c['customer_name'] as String?) ?? c['name'] as String,
+              territory: c['territory'] as String?,
+            ),
+          )
+          .toList();
+      _fromCache = fromCache;
+      _loading = false;
+      _error = null;
+    });
+  }
 
   Future<void> _search(String query) async {
     setState(() {
@@ -95,31 +126,34 @@ class _CustomersScreenState extends State<CustomersScreen> {
     });
     try {
       final effectiveTerritories = _effectiveTerritories;
-      final list = await ErpService.getList(
-        'Customer',
-        filters: [
-          if (effectiveTerritories.isNotEmpty)
-            ['territory', 'in', effectiveTerritories],
-          if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
-        ],
-        fields: const ['name', 'customer_name', 'territory'],
-        limit: 50,
+      final result = await CacheService.getListStaleWhileRevalidate(
+        cacheDoctype: 'Customer_list',
+        cacheKey: '${effectiveTerritories.join(',')}|$query',
+        // Paints instantly from the last cached copy — a weak connection
+        // used to mean staring at a spinner for however long the live
+        // call took to time out before anything showed up at all.
+        onCacheHit: (cached) => _applyRows(cached.rows, true),
+        fetch: () => ErpService.getList(
+          'Customer',
+          filters: [
+            if (effectiveTerritories.isNotEmpty)
+              ['territory', 'in', effectiveTerritories],
+            if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
+          ],
+          fields: const ['name', 'customer_name', 'territory'],
+          limit: 50,
+        ),
       );
-      if (!mounted) return;
-      setState(() {
-        _results = list
-            .map(
-              (c) => _CustomerRow(
-                name: c['name'] as String,
-                label: (c['customer_name'] as String?) ?? c['name'] as String,
-                territory: c['territory'] as String?,
-              ),
-            )
-            .toList();
-        _loading = false;
-      });
+      _applyRows(result.rows, result.fromCache);
     } catch (e) {
       if (!mounted) return;
+      // A cache hit already painted the screen above — a failed live
+      // refresh on top of that just means "still showing the cached
+      // copy", not a blocking error.
+      if (_results.isNotEmpty) {
+        setState(() => _loading = false);
+        return;
+      }
       final message = handleErpError(context, e);
       if (message == null) return;
       setState(() {
@@ -135,7 +169,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
       context: context,
       backgroundColor: AppColors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
       builder: (context) {
         var localSelection = Set<String>.from(_selectedTerritories);
@@ -150,7 +186,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   children: [
                     const Text(
                       'فلترة حسب المنطقة',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ..._availableTerritories.map(
@@ -175,14 +214,16 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => setSheetState(() => localSelection.clear()),
+                            onPressed: () =>
+                                setSheetState(() => localSelection.clear()),
                             child: const Text('مسح الفلتر'),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton(
-                            onPressed: () => Navigator.of(context).pop(localSelection),
+                            onPressed: () =>
+                                Navigator.of(context).pop(localSelection),
                             child: const Text('تطبيق'),
                           ),
                         ),
@@ -221,7 +262,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
       );
       num balance = 0;
       for (final entry in list) {
-        balance += ((entry['debit'] as num?) ?? 0) - ((entry['credit'] as num?) ?? 0);
+        balance +=
+            ((entry['debit'] as num?) ?? 0) - ((entry['credit'] as num?) ?? 0);
       }
       return balance;
     } catch (_) {
@@ -316,7 +358,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   title: const Text('تفاصيل / تعديل العميل'),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
-                    context.push(documentDetailRoute('Customer', customer.name));
+                    context.push(
+                      documentDetailRoute('Customer', customer.name),
+                    );
                   },
                 ),
               ],
@@ -338,7 +382,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
             IconButton(
               icon: Icon(
                 Icons.tune_rounded,
-                color: _selectedTerritories.isNotEmpty ? AppColors.accent : null,
+                color: _selectedTerritories.isNotEmpty
+                    ? AppColors.accent
+                    : null,
               ),
               onPressed: _openTerritoryFilter,
             ),
@@ -358,38 +404,71 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 ),
               ),
             ),
-            Expanded(child: _buildBody()),
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.accent,
+                onRefresh: () => _search(_controller.text),
+                child: _buildBody(),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  // A `RefreshIndicator`'s pull gesture needs a scrollable descendant to
+  // attach to — every branch below is wrapped in one (with
+  // `AlwaysScrollableScrollPhysics`, since a short/empty list otherwise
+  // isn't scrollable at all) so pull-to-refresh works no matter what's on
+  // screen: loading, an error, an empty result, or the real list.
   Widget _buildBody() {
     if (_loading) {
-      return const LoadingIndicator();
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          Padding(padding: EdgeInsets.only(top: 80), child: LoadingIndicator()),
+        ],
+      );
     }
 
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            _error!,
-            style: const TextStyle(color: AppColors.accent),
-            textAlign: TextAlign.center,
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                _error!,
+                style: const TextStyle(color: AppColors.accent),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-        ),
+        ],
       );
     }
 
     if (_results.isEmpty) {
-      return const Center(
-        child: Text('لا يوجد عملاء', style: TextStyle(color: AppColors.midGray)),
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          Padding(
+            padding: EdgeInsets.only(top: 80),
+            child: Center(
+              child: Text(
+                'لا يوجد عملاء',
+                style: TextStyle(color: AppColors.midGray),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       itemCount: _results.length,
       separatorBuilder: (context, i) => const SizedBox(height: 8),
@@ -427,7 +506,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                           customer.label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
                         ),
                         if (customer.territory != null) ...[
                           const SizedBox(height: 2),
@@ -435,12 +517,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             customer.territory!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.midGray, fontSize: 11.5),
+                            style: const TextStyle(
+                              color: AppColors.midGray,
+                              fontSize: 11.5,
+                            ),
                           ),
                         ],
                       ],
                     ),
                   ),
+                  RowSyncIcon(fromCache: _fromCache),
+                  const SizedBox(width: 6),
                   const Icon(
                     Icons.chevron_left_rounded,
                     color: AppColors.midGray,

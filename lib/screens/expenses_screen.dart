@@ -90,6 +90,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   final _notesController = TextEditingController();
 
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
 
   bool get _isVehicleLogForm =>
@@ -419,6 +420,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         type: SyncJobType.expenseClaimVehicleLogChain,
         payload: buildOfflinePayload(),
       );
+      _lastSubmitWasQueued = true;
       if (!mounted) return true;
       setState(_resetToStart);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -432,6 +434,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     if (!SyncStatusService().isOnline) {
@@ -644,6 +647,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           'note': _notesController.text.trim(),
         },
       );
+      _lastSubmitWasQueued = true;
       if (!mounted) return true;
       setState(_resetToStart);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -657,6 +661,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     if (!SyncStatusService().isOnline) {
@@ -962,6 +967,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 label: 'اسحب لتسجيل المصروف',
                 confirmedLabel: 'تم التسجيل',
                 onConfirmed: _submitVehicleLogPath,
+                wasQueued: () => _lastSubmitWasQueued,
               ),
             ),
           ),
@@ -1030,6 +1036,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 label: 'اسحب لتسجيل المصروف',
                 confirmedLabel: 'تم التسجيل',
                 onConfirmed: _submitExpenseClaimPath,
+                wasQueued: () => _lastSubmitWasQueued,
               ),
             ),
           ),

@@ -69,9 +69,26 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
       // logged-in rep — offline, `getUserTerritories` itself would fail
       // before ever reaching the invoice query, so caching only the last
       // step wouldn't help; caching the end result does.
-      final result = await CacheService.getListCached(
+      final result = await CacheService.getListStaleWhileRevalidate(
         cacheDoctype: 'DueInvoices',
         cacheKey: 'current',
+        onCacheHit: (cached) {
+          if (!mounted) return;
+          setState(() {
+            _invoices = cached.rows
+                .map(
+                  (r) => _DueInvoice(
+                    name: r['name'] as String,
+                    customerLabel: r['customerLabel'] as String,
+                    outstandingAmount: r['outstandingAmount'] as num,
+                    dueDate: r['dueDate'] as String?,
+                  ),
+                )
+                .toList();
+            _cachedAt = cached.cachedAt;
+            _loading = false;
+          });
+        },
         fetch: () async {
           final territories = await ErpService.getUserTerritories();
           if (territories.isEmpty) return const [];
@@ -171,6 +188,10 @@ class _DueInvoicesScreenState extends State<DueInvoicesScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      if (_invoices.isNotEmpty) {
+        setState(() => _loading = false);
+        return;
+      }
       final message = handleErpError(context, e);
       setState(() {
         _loading = false;

@@ -109,6 +109,40 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
     return AppColors.midGray;
   }
 
+  /// A cloud base for every state, with a small overlay marking the actual
+  /// outcome — success (green check) / failed or needs-review (red/orange
+  /// X) / still pending or sending (a spinner) — so the queue reads at a
+  /// glance without needing the text label at all.
+  Widget _statusIcon(String status) {
+    final color = _statusColor(status);
+    if (status == SyncJobStatus.inProgress.name) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    IconData overlay;
+    if (status == SyncJobStatus.success.name) {
+      overlay = Icons.check_circle_rounded;
+    } else if (status == SyncJobStatus.pending.name) {
+      overlay = Icons.schedule_rounded;
+    } else {
+      overlay = Icons.error_rounded;
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(Icons.cloud_queue_rounded, color: color, size: 22),
+        PositionedDirectional(
+          end: -4,
+          bottom: -4,
+          child: Icon(overlay, color: color, size: 14),
+        ),
+      ],
+    );
+  }
+
   String _relativeTime(DateTime time) {
     final diff = DateTime.now().difference(time);
     if (diff.inMinutes < 1) return 'الآن';
@@ -200,6 +234,8 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                               children: [
                                 Row(
                                   children: [
+                                    _statusIcon(job.status),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         label,

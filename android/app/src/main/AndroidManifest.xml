@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="RedLine"
         android:name="${applicationName}"
@@ -39,6 +40,17 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Firebase's own recommended setup for a killed/backgrounded app:
+             without this, some Android versions show a blank/white square
+             instead of the app icon on an FCM system-tray notification —
+             this is display-only and needs no notification channel to
+             exist, unlike `default_notification_channel_id` (deliberately
+             not set here — nothing in this app creates that channel yet,
+             and referencing a channel that doesn't exist can silently drop
+             the notification instead of falling back). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../services/auth_service.dart';
 import '../services/erp_service.dart';
+import '../services/prefetch_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/server_status_icon.dart';
 import 'document_detail_screen.dart';
 import 'treasury_screen.dart';
 
@@ -163,6 +165,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadTreasuries();
     _loadRole();
     _loadPerformance();
+    // Fire-and-forget — warms the same caches Customers/Sales Orders/
+    // Sales Invoices/... read from, so opening one later on a weak
+    // connection paints instantly instead of waiting on a live call.
+    PrefetchService.warmCachesOnce();
   }
 
   /// A region manager gets a different home screen entirely (team-focused
@@ -484,6 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        const ServerStatusIcon(),
+        const SizedBox(width: 4),
         Semantics(
           label: _unreadNotifications > 0
               ? 'الإشعارات، $_unreadNotifications غير مقروءة'

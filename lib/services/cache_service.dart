@@ -84,6 +84,51 @@ class CacheService {
         );
   }
 
+  /// Same contract as [getListCached], plus [onCacheHit] — called
+  /// synchronously with the last cached copy (if any) BEFORE the live
+  /// [fetch] even starts, so a screen can paint instantly instead of
+  /// showing a spinner for however long a weak connection takes to time
+  /// out. The eventual return value is still the live result (or the same
+  /// cache again, on a connectivity failure) — a caller should `setState`
+  /// once from [onCacheHit] and once more from the awaited return, so a
+  /// slow network silently upgrades the screen from "cached" to "live"
+  /// instead of blocking on it.
+  static Future<CachedListResult> getListStaleWhileRevalidate({
+    required String cacheDoctype,
+    required String cacheKey,
+    required Future<List<Map<String, dynamic>>> Function() fetch,
+    required void Function(CachedListResult cached) onCacheHit,
+  }) async {
+    final cached = await _read(cacheDoctype, cacheKey);
+    if (cached != null) onCacheHit(cached);
+    try {
+      final rows = await fetch();
+      final now = DateTime.now();
+      await _write(cacheDoctype, cacheKey, rows, now);
+      return CachedListResult(rows: rows, fromCache: false, cachedAt: now);
+    } catch (e) {
+      final isConnectivityFailure = e is ErpException
+          ? e.isConnectivityFailure
+          : true;
+      if (!isConnectivityFailure) rethrow;
+      if (cached != null) return cached;
+      rethrow;
+    }
+  }
+
+  /// Deletes every cached entry under [cacheDoctype] (every `cacheKey`
+  /// variant — e.g. every workflow-state list for a doctype in Pending
+  /// Approvals), so the next read is forced to go live instead of quietly
+  /// keeping a copy that a just-arrived push notification says is stale.
+  /// Used by [PrefetchService.handlePushRefresh] — a push telling the app
+  /// "this doctype changed" invalidates rather than tries to guess which
+  /// exact cache key is now wrong.
+  static Future<void> invalidate(String cacheDoctype) {
+    return (_db.delete(
+      _db.referenceCache,
+    )..where((t) => t.doctype.equals(cacheDoctype))).go();
+  }
+
   static Future<CachedListResult?> _read(
     String cacheDoctype,
     String cacheKey,

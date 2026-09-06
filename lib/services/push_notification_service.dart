@@ -2,9 +2,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../firebase_options.dart';
 import '../main.dart' show openDocumentFromNotification;
 import 'auth_service.dart';
 import 'erp_service.dart';
+import 'prefetch_service.dart';
 
 /// Registers this device's FCM token against the logged-in user
 /// (`User.custom_fcm_token`) so a server-side sender (not a Server
@@ -12,11 +14,11 @@ import 'erp_service.dart';
 /// system notification on every workflow step, matching the existing
 /// `Notification Log`/in-app bell one-for-one.
 ///
-/// Entirely best-effort: until the Android app is registered in the
-/// Firebase project and `google-services.json` is dropped into
-/// `android/app/`, `Firebase.initializeApp()` below fails and every method
-/// here just no-ops — the app must never crash or block on this being
-/// unconfigured.
+/// Still wrapped in a broad try/catch — Android-side Firebase setup
+/// (`google-services.json`, `firebase_options.dart`) is done, but the
+/// SERVER side (the bench-deployed sender using the service-account key)
+/// isn't yet, so a token gets saved but nothing sends to it until that
+/// ships. Never let any of this crash or block login/startup either way.
 class PushNotificationService {
   PushNotificationService._();
 
@@ -28,7 +30,9 @@ class PushNotificationService {
   static Future<void> registerForCurrentUser() async {
     try {
       if (!_initialized) {
-        await Firebase.initializeApp();
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
         _initialized = true;
       }
 
@@ -47,6 +51,14 @@ class PushNotificationService {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleTap);
       final initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) _handleTap(initialMessage);
+
+      // Arrived while the app is already open — this is the "instant
+      // refresh" case: a manager approves something, the rep's app (open
+      // right now) invalidates/re-warms its cache for that doctype instead
+      // of only finding out once they happen to open or pull-to-refresh
+      // that screen. Requires the server side to include a `doctype` field
+      // in the FCM `data` payload — see `PrefetchService.handlePushRefresh`.
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     } catch (e, stackTrace) {
       // Expected until Firebase is actually configured for this app —
       // never let a missing/incomplete Firebase setup break login or
@@ -61,6 +73,18 @@ class PushNotificationService {
     final name = message.data['name'];
     if (doctype is String && name is String) {
       openDocumentFromNotification(doctype, name);
+    }
+    _refreshCacheFor(message);
+  }
+
+  static void _handleForegroundMessage(RemoteMessage message) {
+    _refreshCacheFor(message);
+  }
+
+  static void _refreshCacheFor(RemoteMessage message) {
+    final doctype = message.data['doctype'];
+    if (doctype is String) {
+      PrefetchService.handlePushRefresh(doctype);
     }
   }
 

@@ -144,6 +144,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   bool _isReturn = false;
 
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
 
   @override
@@ -240,7 +241,18 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
   /// Deliberately no client-side `account_manager` filter — see
   /// SalesOrderScreen._pickCustomer for why.
   Future<void> _pickCustomer() async {
-    final territories = await ErpService.getExpandedUserTerritories();
+    List<String> territories;
+    try {
+      territories = await ErpService.getExpandedUserTerritories();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     String? territoryFilter;
 
@@ -1117,6 +1129,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     // Declared outside the `try` (not `final` inside it) so the `catch`
@@ -1199,6 +1212,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               'data': fields,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1219,6 +1233,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           type: SyncJobType.salesInvoiceCreate,
           payload: fields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1275,6 +1290,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               'data': capturedFields,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1288,6 +1304,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           type: SyncJobType.salesInvoiceCreate,
           payload: capturedFields,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(_resetInvoiceForm);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1379,6 +1396,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                           : 'اسحب لحفظ الفاتورة',
                       confirmedLabel: 'تم الحفظ',
                       onConfirmed: _submit,
+                      wasQueued: () => _lastSubmitWasQueued,
                     ),
                   ),
                 ),

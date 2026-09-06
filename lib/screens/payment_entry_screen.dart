@@ -94,6 +94,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
 
   bool _loadingDraft = false;
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
   String? _outstandingError;
 
@@ -118,7 +119,18 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
   /// Deliberately no client-side `account_manager` filter — see
   /// SalesOrderScreen._pickCustomer for why.
   Future<void> _pickCustomer() async {
-    final territories = await ErpService.getExpandedUserTerritories();
+    List<String> territories;
+    try {
+      territories = await ErpService.getExpandedUserTerritories();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     String? territoryFilter;
 
@@ -383,6 +395,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     // Declared outside the `try` so `catch` can still reach it to enqueue
@@ -435,6 +448,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           type: SyncJobType.paymentEntryCreate,
           payload: payload,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(resetForm);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -467,6 +481,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           type: SyncJobType.paymentEntryCreate,
           payload: capturedPayload,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(() {
           _customer = null;
@@ -822,6 +837,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     label: 'اسحب لتأكيد التحصيل',
                     confirmedLabel: 'تم التحصيل',
                     onConfirmed: _submit,
+                    wasQueued: () => _lastSubmitWasQueued,
                   ),
                 ),
               ),

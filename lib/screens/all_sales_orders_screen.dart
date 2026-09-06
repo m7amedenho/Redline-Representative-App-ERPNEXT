@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/doc_status.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
 /// All Sales Orders, newest-first, with a live status chip on each —
@@ -33,6 +35,7 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
   bool _loading = true;
   String? _error;
 
+  bool _fromCache = false;
   List<String> _workflowStates = [];
   String? _stateFilter;
   final _searchController = TextEditingController();
@@ -77,25 +80,43 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
       _error = null;
     });
     try {
-      final list = await ErpService.getList(
-        'Sales Order',
-        fields: const [
-          'name',
-          'customer_name',
-          'customer',
-          'grand_total',
-          'workflow_state',
-          'status',
-          'docstatus',
-          'modified',
-        ],
-        orderBy: 'modified desc',
-        limit: 100,
+      final result = await CacheService.getListStaleWhileRevalidate(
+        cacheDoctype: 'Sales Order_list',
+        cacheKey: 'recent',
+        onCacheHit: (cached) {
+          if (!mounted) return;
+          setState(() {
+            _orders = cached.rows;
+            _fromCache = true;
+            _loading = false;
+          });
+        },
+        fetch: () => ErpService.getList(
+          'Sales Order',
+          fields: const [
+            'name',
+            'customer_name',
+            'customer',
+            'grand_total',
+            'workflow_state',
+            'status',
+            'docstatus',
+            'modified',
+          ],
+          orderBy: 'modified desc',
+          limit: 100,
+        ),
       );
       if (!mounted) return;
-      setState(() => _orders = list);
+      setState(() {
+        _orders = result.rows;
+        _fromCache = result.fromCache;
+      });
     } catch (e) {
       if (!mounted) return;
+      // A cache hit already painted the list above — a failed live refresh
+      // on top of that just leaves the cached copy showing, not an error.
+      if (_orders.isNotEmpty) return;
       setState(() => _error = 'تعذر جلب الطلبيات: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -257,23 +278,30 @@ class _AllSalesOrdersScreenState extends State<AllSalesOrdersScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: status.color.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    status.label,
-                                    style: TextStyle(
-                                      color: status.color,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11.5,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    RowSyncIcon(fromCache: _fromCache),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: status.color.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        status.label,
+                                        style: TextStyle(
+                                          color: status.color,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                                 if (amount != null) ...[
                                   const SizedBox(height: 6),

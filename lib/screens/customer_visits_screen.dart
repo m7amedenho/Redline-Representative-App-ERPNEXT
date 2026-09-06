@@ -527,6 +527,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
   final _notesController = TextEditingController();
   final _receiptController = TextEditingController();
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
   String? _receiptError;
 
@@ -544,7 +545,18 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
   }
 
   Future<void> _pickCustomer() async {
-    final territories = await ErpService.getExpandedUserTerritories();
+    List<String> territories;
+    try {
+      territories = await ErpService.getExpandedUserTerritories();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت'),
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     final result = await showSearchPicker(
       context: context,
@@ -641,6 +653,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       _submitting = true;
       _error = null;
       _receiptError = null;
+      _lastSubmitWasQueued = false;
     });
     // Declared outside the `try` so `catch` can still reach it to enqueue
     // an offline job.
@@ -663,6 +676,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           type: SyncJobType.customerVisitCreate,
           payload: body,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -692,6 +706,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           type: SyncJobType.customerVisitCreate,
           payload: capturedBody,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -836,6 +851,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
                   label: 'اسحب لحفظ الزيارة',
                   confirmedLabel: 'تم الحفظ',
                   onConfirmed: _submit,
+                  wasQueued: () => _lastSubmitWasQueued,
                 ),
               ),
             ),

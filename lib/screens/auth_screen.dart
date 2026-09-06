@@ -96,7 +96,18 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
 
-      await AuthService.refreshSession();
+      // Fingerprint already confirmed it's really them — a network refresh
+      // failing here must NOT keep them locked out. Try it, but only a
+      // genuine server rejection (session actually invalid) should block
+      // entry; a connectivity failure just means the existing stored
+      // access token is used as-is, and `ErpService`'s own 401-refresh-retry
+      // transparently catches up the moment a real request goes out once
+      // back online.
+      try {
+        await AuthService.refreshSession();
+      } on AuthException catch (e) {
+        if (e.serverRejected) rethrow;
+      }
       unawaited(PushNotificationService.registerForCurrentUser());
       if (!mounted) return;
       context.go('/welcome');

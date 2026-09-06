@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'auth_service.dart';
+import 'cache_service.dart';
 
 /// Same rationale as `AuthService._hardNetworkTimeout` — a Dart-level
 /// backstop in case the underlying socket hangs longer than Dio's own
@@ -559,8 +560,20 @@ class ErpService {
   /// engine still does the actual enforcement everywhere else in this app,
   /// this is purely a UI convenience for reps who legitimately see more
   /// than one territory.
+  /// Confirmed real bug this guards against: on a weak connection, every
+  /// `getList` call below used to fail silently (caught and ignored so the
+  /// *other* resolution layer still got a chance to run), so a genuine
+  /// network hiccup and "this rep truly has zero territories" both ended up
+  /// returning the same empty list — and every caller reads an empty list
+  /// as "no filter", so a rep briefly saw every customer/order in the
+  /// system instead of just their own territory. Now each layer's failure
+  /// is checked: if it was a connectivity failure (not a real permission
+  /// rejection) AND nothing was resolved, this throws instead of returning
+  /// `[]` — [getExpandedUserTerritories] below catches that at the cache
+  /// layer and falls back to the last successfully resolved list instead.
   static Future<List<String>> getUserTerritories() async {
     final territories = <String>{};
+    var hadConnectivityFailure = false;
 
     try {
       final userId = await AuthService.currentUserId();
@@ -579,9 +592,13 @@ class ErpService {
           if (val != null) territories.add(val);
         }
       }
-    } catch (_) {
+    } catch (e) {
       // This account may simply not have read access to User Permission —
-      // fall through to the Territory-based layers below.
+      // fall through to the Territory-based layers below either way, but
+      // remember if this specifically looked like a dropped connection.
+      if (e is ErpException && e.isConnectivityFailure) {
+        hadConnectivityFailure = true;
+      }
     }
 
     try {
@@ -628,8 +645,17 @@ class ErpService {
           }
         }
       }
-    } catch (_) {
+    } catch (e) {
       // Best-effort — whatever layer 1 already found is still returned.
+      if (e is ErpException && e.isConnectivityFailure) {
+        hadConnectivityFailure = true;
+      }
+    }
+
+    if (territories.isEmpty && hadConnectivityFailure) {
+      throw const ErpException(
+        'تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت',
+      );
     }
 
     return territories.toList();
@@ -644,41 +670,54 @@ class ErpService {
   /// territory has no descendants) — safe to use unconditionally everywhere
   /// a customer/document list is scoped by territory, not just in
   /// manager-only screens.
+  /// Wrapped in [CacheService] keyed per user: a connectivity failure
+  /// anywhere in here (the base [getUserTerritories] call now throws on one
+  /// instead of returning `[]`, same as a failure in the expansion queries
+  /// below) falls back to the LAST successfully resolved expanded set
+  /// instead of silently collapsing to "no territories" — which every
+  /// caller in this app reads as "no filter, show everything". Only the
+  /// very first resolution ever (no cache yet, e.g. right after a fresh
+  /// install with no network) can still propagate the failure — every
+  /// caller must treat that as a real error, never as "proceed unfiltered".
   static Future<List<String>> getExpandedUserTerritories() async {
-    final territories = await getUserTerritories();
-    if (territories.isEmpty) return territories;
+    final userId = await AuthService.currentUserId() ?? 'unknown';
+    final result = await CacheService.getListCached(
+      cacheDoctype: '_ExpandedUserTerritories',
+      cacheKey: userId,
+      fetch: () async {
+        final territories = await getUserTerritories();
+        if (territories.isEmpty) return const [];
 
-    final allTerritoryNames = Set<String>.from(territories);
-    try {
-      final territoryRows = await getList(
-        'Territory',
-        filters: [
-          ['name', 'in', territories],
-        ],
-        fields: const ['name', 'lft', 'rgt'],
-        limit: territories.length,
-      );
-      for (final row in territoryRows) {
-        final lft = row['lft'] as num?;
-        final rgt = row['rgt'] as num?;
-        if (lft == null || rgt == null) continue;
-        final descendants = await getList(
+        final allTerritoryNames = Set<String>.from(territories);
+        final territoryRows = await getList(
           'Territory',
           filters: [
-            ['lft', '>', lft],
-            ['rgt', '<', rgt],
+            ['name', 'in', territories],
           ],
-          fields: const ['name'],
-          limit: 200,
+          fields: const ['name', 'lft', 'rgt'],
+          limit: territories.length,
         );
-        allTerritoryNames.addAll(
-          descendants.map((d) => d['name'] as String?).whereType<String>(),
-        );
-      }
-    } catch (_) {
-      // Best-effort — the caller still gets the un-expanded list.
-    }
-    return allTerritoryNames.toList();
+        for (final row in territoryRows) {
+          final lft = row['lft'] as num?;
+          final rgt = row['rgt'] as num?;
+          if (lft == null || rgt == null) continue;
+          final descendants = await getList(
+            'Territory',
+            filters: [
+              ['lft', '>', lft],
+              ['rgt', '<', rgt],
+            ],
+            fields: const ['name'],
+            limit: 200,
+          );
+          allTerritoryNames.addAll(
+            descendants.map((d) => d['name'] as String?).whereType<String>(),
+          );
+        }
+        return allTerritoryNames.map((t) => {'t': t}).toList();
+      },
+    );
+    return result.rows.map((r) => r['t'] as String).toList();
   }
 
   /// The `Sales Person` record linked to the current user — tries the

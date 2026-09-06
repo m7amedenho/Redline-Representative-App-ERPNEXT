@@ -57,12 +57,26 @@ class SyncStatusService extends ChangeNotifier {
   Timer? _debounce;
   int _listenerCount = 0;
 
-  bool _isOnline = false;
+  // Starts optimistic (assumed online) rather than pessimistic. This was a
+  // real, confirmed bug: starting `false` meant every screen's "queue if
+  // offline" gate (all of them check this flag BEFORE attempting anything
+  // live) would misfire for the first few seconds after app start —
+  // photo attach was the one actually noticed, but every other offline
+  // gate had the exact same race. The device is online far more often
+  // than not, and every one of those call sites already has a real
+  // connectivity-failure fallback for when this guess is wrong (an actual
+  // offline device just gets its first live attempt fail fast and fall
+  // through to the same queue path) — so defaulting `true` trades a rare,
+  // recoverable failure mode for a common, silent, unrecoverable-looking
+  // one.
+  bool _isOnline = true;
   int _pendingCount = 0;
   bool _checking = false;
 
-  /// True only after a real `/api/method/ping` round trip succeeded — never
-  /// inferred from `connectivity_plus` alone.
+  /// Best-effort reachability signal — starts optimistic, corrected by the
+  /// first real `/api/method/ping` (never inferred from `connectivity_plus`
+  /// alone). Screens gating on this must still treat a live-call failure as
+  /// authoritative over this cached flag — see [ErpException.isConnectivityFailure].
   bool get isOnline => _isOnline;
 
   int get pendingCount => _pendingCount;

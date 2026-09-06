@@ -80,6 +80,7 @@ class _CustomerRegistrationScreenState
   bool _resolvingTerritory = true;
 
   bool _submitting = false;
+  bool _lastSubmitWasQueued = false;
   String? _error;
   String? _locationStatus;
   String? _capturedLocationGeoJson;
@@ -345,6 +346,7 @@ class _CustomerRegistrationScreenState
     setState(() {
       _submitting = true;
       _error = null;
+      _lastSubmitWasQueued = false;
     });
 
     // Declared outside the `try` so `catch` can still reach it to enqueue
@@ -408,6 +410,7 @@ class _CustomerRegistrationScreenState
               'data': body,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -454,6 +457,7 @@ class _CustomerRegistrationScreenState
           type: SyncJobType.customerRegistrationCreate,
           payload: body,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -505,6 +509,7 @@ class _CustomerRegistrationScreenState
               'data': capturedBody,
             },
           );
+          _lastSubmitWasQueued = true;
           if (!mounted) return true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -518,6 +523,7 @@ class _CustomerRegistrationScreenState
           type: SyncJobType.customerRegistrationCreate,
           payload: capturedBody,
         );
+        _lastSubmitWasQueued = true;
         if (!mounted) return true;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -744,6 +750,7 @@ class _CustomerRegistrationScreenState
                         : 'اسحب لتسجيل العميل',
                     confirmedLabel: 'تم الحفظ',
                     onConfirmed: _submit,
+                    wasQueued: () => _lastSubmitWasQueued,
                   ),
                 ),
               ),

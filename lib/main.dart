@@ -28,7 +28,6 @@ import 'screens/welcome_screen.dart';
 import 'services/sync_engine.dart';
 import 'theme/app_theme.dart';
 import 'widgets/search_picker.dart';
-import 'widgets/sync_status_bar.dart';
 
 void main() {
   // Touches the singleton so it starts listening for connectivity and
@@ -175,7 +174,7 @@ class RedErpApp extends StatelessWidget {
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: SyncStatusBar(child: child ?? const SizedBox.shrink()),
+          child: child ?? const SizedBox.shrink(),
         );
       },
     );
