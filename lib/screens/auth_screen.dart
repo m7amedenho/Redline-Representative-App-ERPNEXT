@@ -121,6 +121,10 @@ class _AuthScreenState extends State<AuthScreen> {
         if (mounted) setState(() => _showBiometricOption = false);
       }
       if (!mounted) return;
+      if (e.accessRestricted) {
+        context.go('/access-restricted', extra: e.message);
+        return;
+      }
       setState(() {
         _biometricBusy = false;
         _errorText = e.message;
@@ -166,6 +170,11 @@ class _AuthScreenState extends State<AuthScreen> {
       context.go('/welcome');
     } on AuthException catch (e) {
       if (!mounted) return;
+      if (e.accessRestricted) {
+        setState(() => _isLoading = false);
+        context.go('/access-restricted', extra: e.message);
+        return;
+      }
       setState(() {
         _isLoading = false;
         _errorText = e.message;

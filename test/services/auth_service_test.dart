@@ -146,7 +146,8 @@ void main() {
         throwsA(
           isA<AuthException>()
               .having((e) => e.serverRejected, 'serverRejected', true)
-              .having((e) => e.message, 'message', contains('غير مفعّل')),
+              .having((e) => e.accessRestricted, 'accessRestricted', true)
+              .having((e) => e.message, 'message', contains('غير مصرح')),
         ),
       );
     });

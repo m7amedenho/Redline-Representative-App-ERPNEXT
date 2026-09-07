@@ -19,7 +19,11 @@ const _hardNetworkTimeout = Duration(seconds: 25);
 /// Friendly, Arabic-only error meant to be shown directly to the user.
 /// Never surface a raw exception/stack trace in the UI.
 class AuthException implements Exception {
-  const AuthException(this.message, {this.serverRejected = false});
+  const AuthException(
+    this.message, {
+    this.serverRejected = false,
+    this.accessRestricted = false,
+  });
 
   final String message;
 
@@ -28,6 +32,15 @@ class AuthException implements Exception {
   /// invalid and should be cleared. False for network/timeout failures,
   /// where the stored refresh token may still be good and worth retrying.
   final bool serverRejected;
+
+  /// True specifically for the licensing/seat-access `PermissionError`
+  /// `mobile_control` throws when this account isn't allowed to use the
+  /// mobile app right now (see `red_license`'s `License User Access` on
+  /// the server). The caller should show a dedicated full-screen "access
+  /// restricted" state instead of just an inline form error — nothing
+  /// else about the app (not even the username) should render for an
+  /// account in this state.
+  final bool accessRestricted;
 
   @override
   String toString() => message;
@@ -373,8 +386,9 @@ class AuthService {
       if (excType == 'PermissionError' ||
           exception.contains('PermissionError')) {
         return const AuthException(
-          'حسابك غير مفعّل لاستخدام التطبيق، تواصل مع الإدارة.',
+          'حسابك غير مصرح له باستخدام تطبيق الموبايل حاليًا. تواصل مع الإدارة.',
           serverRejected: true,
+          accessRestricted: true,
         );
       }
     }

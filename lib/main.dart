@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'screens/access_restricted_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/customer_registration_screen.dart';
@@ -55,6 +56,11 @@ final _router = GoRouter(
       builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(path: '/auth', builder: (context, state) => const AuthScreen()),
+    GoRoute(
+      path: '/access-restricted',
+      builder: (context, state) =>
+          AccessRestrictedScreen(message: state.extra as String?),
+    ),
     GoRoute(
       path: '/welcome',
       builder: (context, state) => const WelcomeScreen(),
