@@ -422,6 +422,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (i) {
           if (i == 0) {
             setState(() => _navIndex = 0);
+          } else if (i == 1) {
+            context.push('/sales-order');
           } else if (i == 2) {
             context.push('/treasury');
           } else if (i == 3) {
