@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/auth_service.dart';
 import '../services/erp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
@@ -86,9 +87,25 @@ class _StockMovementScreenState extends State<StockMovementScreen>
     try {
       final salesPerson = await ErpService.resolveCurrentSalesPerson();
       if (salesPerson == null) {
+        // `resolveCurrentSalesPerson` swallows its own failure reason (by
+        // design — it's used elsewhere as a "never blocks" best-effort
+        // resolver), so it alone can't tell us WHY it came back empty:
+        // no `Sales Person.custom_user` match, or a connectivity failure
+        // in the underlying `getList` call. Re-resolving just the user id
+        // here (already cached from the earlier `me()` call, so this is
+        // free) turns a dead-end "couldn't determine" into something
+        // actually actionable — the exact value to go check in Desk.
+        final userId = await AuthService.currentUserId();
         setState(() {
           _loadingWarehouses = false;
-          _warehousesError = 'تعذر تحديد المندوب الحالي';
+          _warehousesError = userId != null
+              ? 'لا يوجد سجل "مندوب مبيعات" (Sales Person) مرتبط بحسابك '
+                    '($userId) — افتح سجل مندوبك في Sales Person وتأكد إن '
+                    'حقل "مستخدم التطبيق المرتبط" (custom_user) يساوي '
+                    'هذا البريد بالضبط (بدون مسافات زيادة أو اختلاف في '
+                    'الأحرف الكبيرة/الصغيرة).'
+              : 'تعذر تحديد هوية المستخدم الحالي — تحقق من الاتصال '
+                    'بالإنترنت وحاول تسجيل الدخول من جديد.';
         });
         return;
       }

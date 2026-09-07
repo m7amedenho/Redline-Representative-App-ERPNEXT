@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
+import '../services/auth_service.dart';
 import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
@@ -100,9 +101,19 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
     try {
       final salesPerson = await ErpService.resolveCurrentSalesPerson();
       if (salesPerson == null) {
+        // Same diagnostic upgrade as `StockMovementScreen` — surfaces the
+        // exact user id to check against `Sales Person.custom_user` in
+        // Desk instead of a dead-end "couldn't determine" message.
+        final userId = await AuthService.currentUserId();
         setState(() {
           _loadingPending = false;
-          _pendingError = 'تعذر تحديد المندوب الحالي';
+          _pendingError = userId != null
+              ? 'لا يوجد سجل "مندوب مبيعات" (Sales Person) مرتبط بحسابك '
+                    '($userId) — افتح سجل مندوبك في Sales Person وتأكد إن '
+                    'حقل "مستخدم التطبيق المرتبط" (custom_user) يساوي '
+                    'هذا البريد بالضبط.'
+              : 'تعذر تحديد هوية المستخدم الحالي — تحقق من الاتصال '
+                    'بالإنترنت وحاول تسجيل الدخول من جديد.';
         });
         return;
       }
