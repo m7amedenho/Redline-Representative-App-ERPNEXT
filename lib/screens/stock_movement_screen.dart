@@ -85,6 +85,12 @@ class _StockMovementScreenState extends State<StockMovementScreen>
 
   Future<void> _init() async {
     try {
+      final roles = await AuthService.currentUserRoles();
+      if (roles.contains('WF - Region Manager')) {
+        await _initForRegionManager();
+        return;
+      }
+
       final salesPerson = await ErpService.resolveCurrentSalesPerson();
       if (salesPerson == null) {
         // `resolveCurrentSalesPerson` swallows its own failure reason (by
@@ -149,6 +155,100 @@ class _StockMovementScreenState extends State<StockMovementScreen>
       setState(() {
         _loadingWarehouses = false;
         _warehousesError = message ?? 'تعذر تحميل بيانات المخازن';
+      });
+    }
+  }
+
+  /// A region manager doesn't drive a personal car/transit warehouse
+  /// route, so [ErpService.resolveCurrentSalesPerson]'s own
+  /// `custom_car_warehouse`/`custom_transit_warehouse` are usually empty
+  /// for them — the manager instead needs the UNION of every warehouse
+  /// belonging to the reps under them. Reuses [ErpService.
+  /// getExpandedUserTerritories] (already proven live in the team
+  /// dashboard) to find every sub-territory in their region, reads each
+  /// one's `custom_sales_person` to get the owning rep, then gathers those
+  /// reps' warehouses. Falls back to including the manager's own Sales
+  /// Person warehouses too (union, not replace) in case they carry stock
+  /// personally as well.
+  Future<void> _initForRegionManager() async {
+    try {
+      final territories = await ErpService.getExpandedUserTerritories();
+      final repSalesPersons = <String>{};
+
+      if (territories.isNotEmpty) {
+        final territoryRows = await ErpService.getList(
+          'Territory',
+          filters: [
+            ['name', 'in', territories],
+          ],
+          fields: const ['custom_sales_person'],
+          limit: territories.length,
+        );
+        for (final r in territoryRows) {
+          final sp = r['custom_sales_person'] as String?;
+          if (sp != null && sp.isNotEmpty) repSalesPersons.add(sp);
+        }
+      }
+
+      final ownSalesPerson = await ErpService.resolveCurrentSalesPerson();
+      if (ownSalesPerson != null) repSalesPersons.add(ownSalesPerson);
+
+      if (repSalesPersons.isEmpty) {
+        setState(() {
+          _loadingWarehouses = false;
+          _warehousesError = 'لا يوجد مناديب أو مخازن مرتبطة بمنطقتك';
+        });
+        return;
+      }
+
+      final spRows = await ErpService.getList(
+        'Sales Person',
+        filters: [
+          ['name', 'in', repSalesPersons.toList()],
+        ],
+        fields: const ['name', 'custom_car_warehouse', 'custom_transit_warehouse'],
+        limit: repSalesPersons.length,
+      );
+
+      final candidates = <String>{};
+      for (final sp in spRows) {
+        final car = sp['custom_car_warehouse'] as String?;
+        final transit = sp['custom_transit_warehouse'] as String?;
+        if (car != null && car.isNotEmpty) candidates.add(car);
+        if (transit != null && transit.isNotEmpty) candidates.add(transit);
+      }
+
+      if (candidates.isEmpty) {
+        setState(() {
+          _loadingWarehouses = false;
+          _warehousesError = 'لا يوجد مخازن مرتبطة بمناديب منطقتك';
+        });
+        return;
+      }
+
+      final rows = await ErpService.getList(
+        'Warehouse',
+        filters: [
+          ['name', 'in', candidates.toList()],
+        ],
+        fields: const ['name', 'warehouse_name'],
+        limit: candidates.length,
+      );
+      if (!mounted) return;
+      setState(() {
+        for (final r in rows) {
+          final name = r['name'] as String;
+          _allowedWarehouses[name] = (r['warehouse_name'] as String?) ?? name;
+        }
+        _loadingWarehouses = false;
+      });
+      await _loadWarehouseMovements();
+    } catch (e) {
+      if (!mounted) return;
+      final message = handleErpError(context, e);
+      setState(() {
+        _loadingWarehouses = false;
+        _warehousesError = message ?? 'تعذر تحميل بيانات مخازن منطقتك';
       });
     }
   }
