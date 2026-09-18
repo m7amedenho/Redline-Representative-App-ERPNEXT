@@ -72,8 +72,9 @@ import '../theme/app_theme.dart';
 
 Color _colorForStatusText(String status) {
   final lower = status.toLowerCase();
-  if (lower.contains('cancel') || lower.contains('overdue'))
+  if (lower.contains('cancel') || lower.contains('overdue')) {
     return AppColors.accent;
+  }
   if (lower.contains('paid') ||
       lower.contains('completed') ||
       lower.contains('closed')) {

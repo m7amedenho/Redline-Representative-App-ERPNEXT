@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
@@ -197,15 +198,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       title: 'اختر السيارة',
       hintText: 'ابحث برقم اللوحة...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Vehicle',
-          filters: query.isEmpty
-              ? null
-              : [
-                  ['license_plate', 'like', '%$query%'],
-                ],
-          fields: const ['name', 'license_plate', 'make', 'model'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Vehicle_master',
+          fetch: () => ErpService.getList(
+            'Vehicle',
+            filters: query.isEmpty
+                ? null
+                : [
+                    ['license_plate', 'like', '%$query%'],
+                  ],
+            fields: const ['name', 'license_plate', 'make', 'model'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final license = (row['license_plate'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !license.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -598,10 +609,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     body['exchange_rate'] = 1;
     body['approval_status'] = 'Approved';
     body['is_paid'] = 1;
-    if (treasury.modeOfPayment != null)
+    if (treasury.modeOfPayment != null) {
       body['mode_of_payment'] = treasury.modeOfPayment;
-    if (treasury.account != null)
+    }
+    if (treasury.account != null) {
       body['bank_or_cash_account'] = treasury.account;
+    }
 
     final salesPerson = await ErpService.resolveCurrentSalesPerson();
     if (salesPerson != null) body['المندوب'] = salesPerson;

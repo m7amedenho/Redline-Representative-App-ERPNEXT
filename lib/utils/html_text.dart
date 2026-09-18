@@ -12,18 +12,26 @@ final _whitespacePattern = RegExp(r'[ \t]+');
 final _blankLinesPattern = RegExp(r'\n{3,}');
 
 String stripHtml(String input) {
-  final unescaped = input
+  // 1. Replace block line breaks first so paragraph separation is preserved
+  final withBreaks = input.replaceAll(_blockBreakPattern, '\n');
+  
+  // 2. Remove all HTML tags BEFORE unescaping HTML entities!
+  // This prevents attributes like data-value="&lt;a ... &gt; ... " from
+  // having their &gt; unescaped into '>' which causes the tag regex to end early.
+  final withoutTags = withBreaks.replaceAll(_tagPattern, '');
+  
+  // 3. Unescape HTML entities on the clean text content
+  final unescaped = withoutTags
       .replaceAll('&nbsp;', ' ')
       .replaceAll('&amp;', '&')
       .replaceAll('&lt;', '<')
       .replaceAll('&gt;', '>')
       .replaceAll('&quot;', '"')
-      .replaceAll('&#39;', "'");
+      .replaceAll('&#39;', "'")
+      .replaceAll('\ufeff', '')
+      .replaceAll('\u200b', '');
   
-  final withBreaks = unescaped.replaceAll(_blockBreakPattern, '\n');
-  final withoutTags = withBreaks.replaceAll(_tagPattern, '');
-  
-  return withoutTags
+  return unescaped
       .replaceAll(_whitespacePattern, ' ')
       .replaceAll(_blankLinesPattern, '\n\n')
       .trim();

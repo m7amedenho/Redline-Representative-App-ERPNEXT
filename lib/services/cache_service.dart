@@ -146,4 +146,29 @@ class CacheService {
       cachedAt: row.cachedAt,
     );
   }
+
+  /// Tries the live [fetch] first for a search picker. If it fails due to
+  /// connectivity, it falls back to the master cache (e.g. `cacheDoctype_master`),
+  /// filtering the cached rows in Dart using [searchFilter].
+  static Future<List<Map<String, dynamic>>> getSearchListCached({
+    required String cacheDoctype,
+    required Future<List<Map<String, dynamic>>> Function() fetch,
+    required bool Function(Map<String, dynamic> row) searchFilter,
+  }) async {
+    try {
+      return await fetch();
+    } catch (e) {
+      final isConnectivityFailure = e is ErpException
+          ? e.isConnectivityFailure
+          : true;
+      if (!isConnectivityFailure) rethrow;
+
+      // Fall back to the master cache
+      final cached = await _read(cacheDoctype, 'master');
+      if (cached != null) {
+        return cached.rows.where(searchFilter).toList();
+      }
+      rethrow;
+    }
+  }
 }

@@ -76,9 +76,9 @@ Future<void> promptLogVisit(
     final body = <String, dynamic>{
       'customer': customer,
       if (territory != null && territory.isNotEmpty) 'territory': territory,
-      if (salesPerson != null) 'sales_person': salesPerson,
+      'sales_person': ?salesPerson,
       if (notes.isNotEmpty) 'notes': notes,
-      if (location != null) 'location': location,
+      'location': ?location,
       'reference_doctype': referenceDoctype,
       'reference_name': referenceName,
     };

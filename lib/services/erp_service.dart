@@ -528,8 +528,9 @@ class ErpService {
     try {
       final settings = await getDoc('Selling Settings', 'Selling Settings');
       final sitePriceList = settings['selling_price_list'] as String?;
-      if (sitePriceList != null && sitePriceList.isNotEmpty)
+      if (sitePriceList != null && sitePriceList.isNotEmpty) {
         return sitePriceList;
+      }
     } catch (_) {
       // Ignored — pricing just stays unavailable.
     }
@@ -998,9 +999,9 @@ class ErpService {
       params: {
         'party': party,
         'party_type': partyType,
-        if (company != null) 'company': company,
-        if (priceList != null) 'price_list': priceList,
-        if (doctype != null) 'doctype': doctype,
+        'company': ?company,
+        'price_list': ?priceList,
+        'doctype': ?doctype,
       },
     );
   }
@@ -1072,7 +1073,7 @@ class ErpService {
       'payment_type': paymentType,
       'party': party,
       'company': company,
-      if (partyAccount != null) 'party_account': partyAccount,
+      'party_account': ?partyAccount,
     });
     return callMethodList(
       '/api/method/erpnext.accounts.doctype.payment_entry.payment_entry.get_outstanding_reference_documents',
@@ -1208,6 +1209,22 @@ class ErpService {
       '/api/method/erpnext.stock.doctype.stock_entry.stock_entry.make_stock_in_entry',
       params: {'source_name': sourceName},
     );
+  }
+
+  static Future<String> confirmMaterialReceipt({
+    required String stockEntryName,
+    List<Map<String, dynamic>>? items,
+  }) async {
+    final params = <String, dynamic>{'stock_entry_name': stockEntryName};
+    if (items != null) {
+      params['items'] = jsonEncode(items);
+    }
+    final response = await _send(
+      'POST',
+      '/api/method/red_app.api.confirm_material_receipt',
+      formParams: params,
+    );
+    return response.data['message'] as String;
   }
 
   /// **Not confirmed.** `red_app` is a custom app not covered by either

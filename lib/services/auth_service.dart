@@ -67,6 +67,7 @@ class AuthService {
   static const _accessTokenKey = 'red_erp_access_token';
   static const _refreshTokenKey = 'red_erp_refresh_token';
   static const _biometricEnabledKey = 'red_erp_biometric_enabled';
+  static const _cachedProfileKey = 'red_erp_cached_profile';
 
   static SecureStore _store = const RealSecureStore();
   static Dio? _dio;
@@ -229,10 +230,24 @@ class AuthService {
         throw _mapErrorResponse(response);
       }
 
-      return _unwrap(response.data);
+      final data = _unwrap(response.data);
+      await _store.write(_cachedProfileKey, jsonEncode(data));
+      return data;
     } on DioException catch (e) {
+      final cached = await _store.read(_cachedProfileKey);
+      if (cached != null) {
+        try {
+          return jsonDecode(cached) as Map<String, dynamic>;
+        } catch (_) {}
+      }
       throw _mapDioException(e);
     } on TimeoutException {
+      final cached = await _store.read(_cachedProfileKey);
+      if (cached != null) {
+        try {
+          return jsonDecode(cached) as Map<String, dynamic>;
+        } catch (_) {}
+      }
       throw const AuthException(
         'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
       );
@@ -323,6 +338,7 @@ class AuthService {
     await _store.delete(_domainKey);
     await _store.delete(_accessTokenKey);
     await _store.delete(_refreshTokenKey);
+    await _store.delete(_cachedProfileKey);
     _cachedUserId = null;
     _cachedRoles = null;
   }

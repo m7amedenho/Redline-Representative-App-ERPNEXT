@@ -29,9 +29,15 @@ class CalendarService {
     final calendars = calendarsResult.data;
     if (calendars == null || calendars.isEmpty) return null;
 
-    final writable = calendars.where((c) => c.isReadOnly != true).toList();
-    final chosen = writable.isNotEmpty ? writable.first : calendars.first;
-    return chosen.id;
+    final writable = calendars.where((c) => c.isReadOnly == false).toList();
+    
+    // Pick first writable, fallback to default, fallback to first available
+    if (writable.isNotEmpty) return writable.first.id;
+    
+    final defaultCal = calendars.where((c) => c.isDefault == true).toList();
+    if (defaultCal.isNotEmpty) return defaultCal.first.id;
+
+    return calendars.first.id;
   }
 
   /// Adds one reminder event for a single payment-schedule due date — a

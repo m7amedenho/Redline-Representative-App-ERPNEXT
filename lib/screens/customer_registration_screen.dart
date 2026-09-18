@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
 import '../services/auth_service.dart';
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
@@ -318,14 +319,40 @@ class _CustomerRegistrationScreenState
       title: title,
       search: (query) async {
         final filters = <List<dynamic>>[
-          if (extraFilters != null) ...extraFilters,
+          ...?extraFilters,
           if (query.isNotEmpty) [searchField, 'like', '%$query%'],
         ];
-        final list = await ErpService.getList(
-          doctype,
-          filters: filters.isEmpty ? null : filters,
-          fields: const ['name'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: '${doctype}_master',
+          fetch: () => ErpService.getList(
+            doctype,
+            filters: filters.isEmpty ? null : filters,
+            fields: const ['name'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q)) return false;
+            
+            if (extraFilters != null) {
+              for (final filter in extraFilters) {
+                if (filter.length == 3) {
+                  final field = filter[0].toString();
+                  final op = filter[1].toString();
+                  final val = filter[2];
+                  final rowVal = (row[field] ?? '').toString();
+                  if (op == '=') {
+                    if (rowVal != val.toString()) return false;
+                  } else if (op == 'in') {
+                    final listVal = val as List<dynamic>;
+                    if (!listVal.contains(rowVal)) return false;
+                  }
+                }
+              }
+            }
+            return true;
+          },
         );
         return list
             .map(

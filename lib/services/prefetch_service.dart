@@ -27,6 +27,7 @@ class PrefetchService {
       _warmSalesOrders(),
       _warmSalesInvoices(),
       _warmPendingTransfers(),
+      _warmMasterCaches(),
     ]);
   }
 
@@ -139,17 +140,145 @@ class PrefetchService {
       await CacheService.getListCached(
         cacheDoctype: 'Stock Entry_pending_transfers',
         cacheKey: salesPerson,
-        fetch: () => ErpService.getList(
-          'Stock Entry',
-          filters: [
-            ['custom_sales_rep', '=', salesPerson],
-            ['custom_is_received', '=', 0],
-            ['docstatus', '=', 1],
-          ],
-          fields: const ['name', 'posting_date'],
-          limit: 50,
-        ),
+        fetch: () async {
+          final list = await ErpService.callMethodList(
+            '/api/method/red_app.api.get_pending_transfers',
+            params: {'sales_person': salesPerson},
+          );
+          return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        },
       );
+    } catch (_) {}
+  }
+
+  static Future<void> _warmMasterCaches() async {
+    try {
+      final territories = await ErpService.getExpandedUserTerritories();
+      await Future.wait([
+        // Customers
+        CacheService.getListCached(
+          cacheDoctype: 'Customer_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Customer',
+            filters: [
+              if (territories.isNotEmpty) ['territory', 'in', territories],
+            ],
+            fields: const ['name', 'customer_name', 'territory'],
+            limit: 5000,
+          ),
+        ),
+        // Items
+        CacheService.getListCached(
+          cacheDoctype: 'Item_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Item',
+            fields: const ['name', 'item_name'],
+            limit: 5000,
+          ),
+        ),
+        // Warehouses
+        CacheService.getListCached(
+          cacheDoctype: 'Warehouse_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Warehouse',
+            filters: const [
+              ['disabled', '=', 0],
+              ['is_group', '=', 0],
+            ],
+            fields: const ['name', 'warehouse_name'],
+            limit: 1000,
+          ),
+        ),
+        // Price Lists
+        CacheService.getListCached(
+          cacheDoctype: 'Price List_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Price List',
+            filters: const [
+              ['selling', '=', 1],
+            ],
+            fields: const ['name'],
+            limit: 100,
+          ),
+        ),
+        // Payment Terms Templates
+        CacheService.getListCached(
+          cacheDoctype: 'Payment Terms Template_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Payment Terms Template',
+            fields: const ['name', 'template_name'],
+            limit: 100,
+          ),
+        ),
+        // Terms and Conditions
+        CacheService.getListCached(
+          cacheDoctype: 'Terms and Conditions_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Terms and Conditions',
+            filters: const [
+              ['selling', '=', 1],
+            ],
+            fields: const ['name', 'title'],
+            limit: 100,
+          ),
+        ),
+        // Vehicles
+        CacheService.getListCached(
+          cacheDoctype: 'Vehicle_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Vehicle',
+            fields: const ['name', 'license_plate', 'make', 'model'],
+            limit: 1000,
+          ),
+        ),
+        // Territories
+        CacheService.getListCached(
+          cacheDoctype: 'Territory_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Territory',
+            fields: const ['name', 'territory_manager'],
+            limit: 500,
+          ),
+        ),
+        // Routes
+        CacheService.getListCached(
+          cacheDoctype: 'Route_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Route',
+            fields: const ['name'],
+            limit: 500,
+          ),
+        ),
+        // Customer Groups
+        CacheService.getListCached(
+          cacheDoctype: 'Customer Group_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Customer Group',
+            fields: const ['name'],
+            limit: 100,
+          ),
+        ),
+        // Customer Types
+        CacheService.getListCached(
+          cacheDoctype: 'Customer Type_master',
+          cacheKey: 'master',
+          fetch: () => ErpService.getList(
+            'Customer Type',
+            fields: const ['name'],
+            limit: 100,
+          ),
+        ),
+      ]);
     } catch (_) {}
   }
 }

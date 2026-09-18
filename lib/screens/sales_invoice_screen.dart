@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
@@ -271,11 +272,25 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             ['territory', 'in', territories],
         ];
 
-        final list = await ErpService.getList(
-          'Customer',
-          filters: filters.isEmpty ? null : filters,
-          fields: const ['name', 'customer_name', 'territory'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Customer_master',
+          fetch: () => ErpService.getList(
+            'Customer',
+            filters: filters.isEmpty ? null : filters,
+            fields: const ['name', 'customer_name', 'territory'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+            final terr = (row['territory'] ?? '').toString();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) return false;
+            if (territoryFilter != null && terr != territoryFilter) return false;
+            if (territoryFilter == null && territories.length == 1 && terr != territories.first) return false;
+            if (territoryFilter == null && territories.isNotEmpty && territories.length > 1 && !territories.contains(terr)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -300,7 +315,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     context: pickerContext,
                     title: 'اختر خط السير',
                     search: (q) async => territories
-                        .where((t) => q.isEmpty || t.contains(q))
+                        .where((t) => q.isEmpty || t.toLowerCase().contains(q.toLowerCase()))
                         .map((t) => PickedRecord(name: t, label: t))
                         .toList(),
                   );
@@ -401,15 +416,25 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'اختر صنف',
       hintText: 'ابحث باسم الصنف...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Item',
-          filters: query.isEmpty
-              ? null
-              : [
-                  ['item_name', 'like', '%$query%'],
-                ],
-          fields: const ['name', 'item_name'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Item_master',
+          fetch: () => ErpService.getList(
+            'Item',
+            filters: query.isEmpty
+                ? null
+                : [
+                    ['item_name', 'like', '%$query%'],
+                  ],
+            fields: const ['name', 'item_name'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final itemName = (row['item_name'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -442,8 +467,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
 
     if (hasBatchNo) {
       final picked = await _pickBatchForLine(line);
-      if (!picked)
+      if (!picked) {
         return; // الصنف ده لازم لوط — من غير ما يختار واحد، مش بيتضاف خالص.
+      }
     }
 
     setState(() => _lines.add(line));
@@ -642,8 +668,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => line.priceStatus = 'فشل الاتصال أثناء جلب السعر: $e');
+      }
     }
   }
 
@@ -653,15 +680,25 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'اختر المخزن',
       hintText: 'ابحث باسم المخزن...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Warehouse',
-          filters: [
-            ['disabled', '=', 0],
-            ['is_group', '=', 0],
-            if (query.isNotEmpty) ['warehouse_name', 'like', '%$query%'],
-          ],
-          fields: const ['name', 'warehouse_name'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Warehouse_master',
+          fetch: () => ErpService.getList(
+            'Warehouse',
+            filters: [
+              ['disabled', '=', 0],
+              ['is_group', '=', 0],
+              if (query.isNotEmpty) ['warehouse_name', 'like', '%$query%'],
+            ],
+            fields: const ['name', 'warehouse_name'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final wName = (row['warehouse_name'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !wName.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -683,14 +720,23 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'اختر قائمة أسعار',
       hintText: 'ابحث باسم القائمة...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Price List',
-          filters: [
-            ['selling', '=', 1],
-            if (query.isNotEmpty) ['name', 'like', '%$query%'],
-          ],
-          fields: const ['name'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Price List_master',
+          fetch: () => ErpService.getList(
+            'Price List',
+            filters: [
+              ['selling', '=', 1],
+              if (query.isNotEmpty) ['name', 'like', '%$query%'],
+            ],
+            fields: const ['name'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -731,15 +777,25 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'اختر شروط الدفع',
       hintText: 'ابحث باسم القالب...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Payment Terms Template',
-          filters: query.isEmpty
-              ? null
-              : [
-                  ['template_name', 'like', '%$query%'],
-                ],
-          fields: const ['name', 'template_name'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Payment Terms Template_master',
+          fetch: () => ErpService.getList(
+            'Payment Terms Template',
+            filters: query.isEmpty
+                ? null
+                : [
+                    ['template_name', 'like', '%$query%'],
+                  ],
+            fields: const ['name', 'template_name'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final tName = (row['template_name'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !tName.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -797,14 +853,24 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
       title: 'اختر الشروط والأحكام',
       hintText: 'ابحث باسم القالب...',
       search: (query) async {
-        final list = await ErpService.getList(
-          'Terms and Conditions',
-          filters: [
-            ['selling', '=', 1],
-            if (query.isNotEmpty) ['title', 'like', '%$query%'],
-          ],
-          fields: const ['name', 'title'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Terms and Conditions_master',
+          fetch: () => ErpService.getList(
+            'Terms and Conditions',
+            filters: [
+              ['selling', '=', 1],
+              if (query.isNotEmpty) ['title', 'like', '%$query%'],
+            ],
+            fields: const ['name', 'title'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final title = (row['title'] ?? '').toString().toLowerCase();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !title.contains(q)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -896,8 +962,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     final creditLimit = _creditLimit;
     final customer = _customer;
     final grandTotal = _grandTotal;
-    if (creditLimit == null || customer == null || grandTotal == null)
+    if (creditLimit == null || customer == null || grandTotal == null) {
       return true;
+    }
 
     final currentOutstanding = await _fetchCurrentOutstanding(customer.name);
     if (currentOutstanding == null) return true;
@@ -1938,7 +2005,7 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
-              if (trailing != null) trailing,
+              ?trailing,
               const Icon(Icons.chevron_left_rounded, color: AppColors.midGray),
             ],
           ),

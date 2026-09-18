@@ -668,7 +668,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           'territory': customer.subtitle,
         if (_notesController.text.trim().isNotEmpty)
           'notes': _notesController.text.trim(),
-        if (location != null) 'location': location,
+        'location': ?location,
       };
 
       if (!SyncStatusService().isOnline) {
@@ -816,8 +816,9 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
                   errorText: _receiptError,
                 ),
                 onChanged: (_) {
-                  if (_receiptError != null)
+                  if (_receiptError != null) {
                     setState(() => _receiptError = null);
+                  }
                 },
               ),
               const SizedBox(height: 10),

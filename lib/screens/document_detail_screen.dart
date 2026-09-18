@@ -1526,9 +1526,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               ],
             ),
           ),
-          if (_buildItemsSection(doc) case final section?) section,
-          if (_buildTotalsSection(doc) case final section?) section,
-          if (_buildPaymentScheduleSection(doc) case final section?) section,
+          ?_buildItemsSection(doc),
+          ?_buildTotalsSection(doc),
+          ?_buildPaymentScheduleSection(doc),
           if (widget.doctype == 'Sales Order' ||
               widget.doctype == 'Sales Invoice' ||
               widget.doctype == 'Customer' ||
@@ -1937,8 +1937,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final discountAmount = doc['discount_amount'];
     final discountPercent = doc['additional_discount_percentage'];
     final grandTotal = doc['grand_total'];
-    if (netTotal == null && discountAmount == null && grandTotal == null)
+    if (netTotal == null && discountAmount == null && grandTotal == null) {
       return null;
+    }
 
     return Container(
       margin: const EdgeInsets.only(top: 12),

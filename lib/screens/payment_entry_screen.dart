@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../local_db/sync_job_type.dart';
+import '../services/cache_service.dart';
 import '../services/erp_service.dart';
 import '../services/sync_engine.dart';
 import '../services/sync_status_service.dart';
@@ -151,11 +152,25 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
             ['territory', 'in', territories],
         ];
 
-        final list = await ErpService.getList(
-          'Customer',
-          filters: filters.isEmpty ? null : filters,
-          fields: const ['name', 'customer_name', 'territory'],
-          limit: 20,
+        final list = await CacheService.getSearchListCached(
+          cacheDoctype: 'Customer_master',
+          fetch: () => ErpService.getList(
+            'Customer',
+            filters: filters.isEmpty ? null : filters,
+            fields: const ['name', 'customer_name', 'territory'],
+            limit: 20,
+          ),
+          searchFilter: (row) {
+            final name = (row['name'] ?? '').toString().toLowerCase();
+            final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+            final terr = (row['territory'] ?? '').toString();
+            final q = query.toLowerCase();
+            if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) return false;
+            if (territoryFilter != null && terr != territoryFilter) return false;
+            if (territoryFilter == null && territories.length == 1 && terr != territories.first) return false;
+            if (territoryFilter == null && territories.isNotEmpty && territories.length > 1 && !territories.contains(terr)) return false;
+            return true;
+          },
         );
         return list
             .map(
@@ -180,7 +195,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     context: pickerContext,
                     title: 'اختر خط السير',
                     search: (q) async => territories
-                        .where((t) => q.isEmpty || t.contains(q))
+                        .where((t) => q.isEmpty || t.toLowerCase().contains(q.toLowerCase()))
                         .map((t) => PickedRecord(name: t, label: t))
                         .toList(),
                   );
