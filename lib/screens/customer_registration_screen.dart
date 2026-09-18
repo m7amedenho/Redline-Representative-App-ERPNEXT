@@ -69,6 +69,7 @@ class _CustomerRegistrationScreenState
   final _addressController = TextEditingController();
   final _guaranteesController = TextEditingController();
   final _creditLimitController = TextEditingController();
+  final _nationalIdController = TextEditingController();
 
   String _customerType = 'Individual';
   PickedRecord? _customerGroup;
@@ -112,6 +113,7 @@ class _CustomerRegistrationScreenState
     _phone1Controller.text = (doc['custom_رقم_الهاتف'] as String?) ?? '';
     _phone2Controller.text = (doc['custom_رقم_الهاتف_اخر'] as String?) ?? '';
     _addressController.text = (doc['custom_العنوان'] as String?) ?? '';
+    _nationalIdController.text = (doc['custom_الرقم_القومى'] as String?) ?? '';
 
     final guarantees = doc['custom_الضمانات'];
     if (guarantees is String) {
@@ -400,6 +402,9 @@ class _CustomerRegistrationScreenState
         'custom_الضمانات': _guaranteesController.text.trim(),
       };
 
+      if (_nationalIdController.text.trim().isNotEmpty) {
+        body['custom_الرقم_القومى'] = _nationalIdController.text.trim();
+      }
       if (_phone2Controller.text.trim().isNotEmpty) {
         body['custom_رقم_الهاتف_اخر'] = _formatPhone(_phone2Controller.text);
       }
@@ -593,6 +598,13 @@ class _CustomerRegistrationScreenState
                   const SizedBox(height: 16),
                   _label('نوع العميل'),
                   _buildCustomerTypeSelector(),
+                  const SizedBox(height: 16),
+                  _label('الرقم القومي'),
+                  TextFormField(
+                    controller: _nationalIdController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(hintText: 'الرقم القومي للعميل المكون من 14 رقم'),
+                  ),
                   const SizedBox(height: 16),
                   _label('رقم الموبايل'),
                   TextFormField(
