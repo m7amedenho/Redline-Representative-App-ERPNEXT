@@ -12,11 +12,17 @@ import '../widgets/row_sync_icon.dart';
 import 'document_detail_screen.dart';
 
 class _CustomerRow {
-  const _CustomerRow({required this.name, required this.label, this.territory});
+  const _CustomerRow({
+    required this.name,
+    required this.label,
+    this.territory,
+    this.disabled = false,
+  });
 
   final String name;
   final String label;
   final String? territory;
+  final bool disabled;
 }
 
 /// Customer list/search — `GET /api/resource/Customer` (standard REST,
@@ -110,6 +116,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               name: c['name'] as String,
               label: (c['customer_name'] as String?) ?? c['name'] as String,
               territory: c['territory'] as String?,
+              disabled: ((c['disabled'] as num?) ?? 0) == 1 || ((c['is_frozen'] as num?) ?? 0) == 1,
             ),
           )
           .toList();
@@ -140,7 +147,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ['territory', 'in', effectiveTerritories],
             if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
           ],
-          fields: const ['name', 'customer_name', 'territory'],
+          fields: const ['name', 'customer_name', 'territory', 'disabled', 'is_frozen'],
           limit: 50,
         ),
       );
@@ -474,66 +481,86 @@ class _CustomersScreenState extends State<CustomersScreen> {
       separatorBuilder: (context, i) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final customer = _results[i];
+        final isDisabled = customer.disabled;
+        
         return Material(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(AppRadius.card),
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            onTap: () => _openCustomerActions(customer),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightGray,
-                      borderRadius: BorderRadius.circular(12),
+            onTap: isDisabled ? null : () => _openCustomerActions(customer),
+            child: Opacity(
+              opacity: isDisabled ? 0.5 : 1.0,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGray,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        isDisabled ? Icons.block_rounded : Icons.storefront_rounded,
+                        color: isDisabled ? AppColors.midGray : AppColors.black,
+                        size: 18,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.storefront_rounded,
-                      color: AppColors.black,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          customer.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                        if (customer.territory != null) ...[
-                          const SizedBox(height: 2),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            customer.territory!,
+                            customer.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.midGray,
-                              fontSize: 11.5,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                              color: isDisabled ? AppColors.midGray : AppColors.black,
                             ),
                           ),
+                          if (isDisabled) ...[
+                            const SizedBox(height: 2),
+                            const Text(
+                              'العميل معطل / مجمد',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.accent,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ] else if (customer.territory != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              customer.territory!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.midGray,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  RowSyncIcon(fromCache: _fromCache),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.chevron_left_rounded,
-                    color: AppColors.midGray,
-                    size: 20,
-                  ),
-                ],
+                    if (!isDisabled) ...[
+                      RowSyncIcon(fromCache: _fromCache),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.chevron_left_rounded,
+                        color: AppColors.midGray,
+                        size: 20,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),

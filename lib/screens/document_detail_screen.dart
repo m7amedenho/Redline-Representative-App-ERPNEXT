@@ -60,6 +60,32 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Map<String, dynamic>? _doc;
   bool _loadingDoc = true;
   String? _docError;
+  num? _customerDebt;
+
+  Future<void> _loadCustomerDebt(Map<String, dynamic> doc) async {
+    final customer = doc['customer']?.toString() ?? doc['party']?.toString();
+    if (customer == null) return;
+    
+    try {
+      final list = await ErpService.getList(
+        'GL Entry',
+        filters: [
+          ['party_type', '=', 'Customer'],
+          ['party', '=', customer],
+          ['is_cancelled', '=', 0],
+        ],
+        fields: const ['debit', 'credit'],
+        limit: 500,
+      );
+      num balance = 0;
+      for (final entry in list) {
+        balance += ((entry['debit'] as num?) ?? 0) - ((entry['credit'] as num?) ?? 0);
+      }
+      if (mounted) setState(() => _customerDebt = balance);
+    } catch (_) {
+      // Ignore
+    }
+  }
 
   List<Map<String, dynamic>> _transitions = [];
   bool _loadingTransitions = false;
@@ -125,6 +151,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         _loadItemDiscountLimits(),
         _loadUserRoles(),
         _loadOriginState(),
+        _loadCustomerDebt(doc),
       ]);
     } catch (e) {
       if (!mounted) return;
@@ -151,6 +178,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         _loadUserRoles(),
         _loadOriginState(),
         _loadComments(),
+        _loadCustomerDebt(doc),
       ]);
     } catch (_) {
       // Best-effort — a failed pull-to-refresh just leaves the screen as-is.
@@ -1506,7 +1534,39 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (subtitle != null) ...[
                   const SizedBox(height: 6),
                   Text(
-                    subtitle,
+                    'العميل: $subtitle',
+                    style: const TextStyle(
+                      color: AppColors.black,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ],
+                if (_customerDebt != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'المديونية الحالية: ${_customerDebt!.toStringAsFixed(2)} ج.م',
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+                if (doc['payment_terms_template'] != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'شرط الدفع: ${doc['payment_terms_template']}',
+                    style: const TextStyle(
+                      color: AppColors.midGray,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+                if (doc['delivery_date'] != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'موعد الاستلام: ${doc['delivery_date']}',
                     style: const TextStyle(
                       color: AppColors.midGray,
                       fontSize: 13,
@@ -1514,12 +1574,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ),
                 ],
                 if (amount != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     'الإجمالي: $amount',
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
                     ),
                   ),
                 ],
