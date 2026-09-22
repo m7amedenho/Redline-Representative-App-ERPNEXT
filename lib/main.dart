@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -167,8 +170,47 @@ final _router = GoRouter(
   ],
 );
 
-class RedErpApp extends StatelessWidget {
+class RedErpApp extends StatefulWidget {
   const RedErpApp({super.key});
+
+  @override
+  State<RedErpApp> createState() => _RedErpAppState();
+}
+
+class _RedErpAppState extends State<RedErpApp> {
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+    
+    // Listen to incoming deep links
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme == 'redapp') {
+      final doctype = uri.queryParameters['doctype'];
+      final name = uri.queryParameters['name'];
+      if (doctype != null && name != null) {
+        openDocumentFromNotification(doctype, name);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
