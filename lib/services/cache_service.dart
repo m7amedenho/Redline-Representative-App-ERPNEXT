@@ -57,7 +57,7 @@ class CacheService {
     } catch (e) {
       final isConnectivityFailure = e is ErpException
           ? e.isConnectivityFailure
-          : true;
+          : false;
       if (!isConnectivityFailure) rethrow;
 
       final cached = await _read(cacheDoctype, cacheKey);
@@ -109,7 +109,7 @@ class CacheService {
     } catch (e) {
       final isConnectivityFailure = e is ErpException
           ? e.isConnectivityFailure
-          : true;
+          : false;
       if (!isConnectivityFailure) rethrow;
       if (cached != null) return cached;
       rethrow;
@@ -160,7 +160,7 @@ class CacheService {
     } catch (e) {
       final isConnectivityFailure = e is ErpException
           ? e.isConnectivityFailure
-          : true;
+          : false;
       if (!isConnectivityFailure) rethrow;
 
       // Fall back to the master cache

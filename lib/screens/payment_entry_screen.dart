@@ -9,6 +9,7 @@ import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/erp_error_handling.dart';
 import '../widgets/search_picker.dart';
+import '../widgets/log_visit_prompt.dart';
 import '../widgets/swipe_to_confirm_button.dart';
 import 'document_detail_screen.dart';
 import 'treasury_screen.dart';
@@ -162,13 +163,30 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+            final customerName = (row['customer_name'] ?? '')
+                .toString()
+                .toLowerCase();
             final terr = (row['territory'] ?? '').toString();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) return false;
-            if (territoryFilter != null && terr != territoryFilter) return false;
-            if (territoryFilter == null && territories.length == 1 && terr != territories.first) return false;
-            if (territoryFilter == null && territories.isNotEmpty && territories.length > 1 && !territories.contains(terr)) return false;
+            if (q.isNotEmpty &&
+                !name.contains(q) &&
+                !customerName.contains(q)) {
+              return false;
+            }
+            if (territoryFilter != null && terr != territoryFilter) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.length == 1 &&
+                terr != territories.first) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.isNotEmpty &&
+                territories.length > 1 &&
+                !territories.contains(terr)) {
+              return false;
+            }
             return true;
           },
         );
@@ -195,7 +213,11 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     context: pickerContext,
                     title: 'اختر خط السير',
                     search: (q) async => territories
-                        .where((t) => q.isEmpty || t.toLowerCase().contains(q.toLowerCase()))
+                        .where(
+                          (t) =>
+                              q.isEmpty ||
+                              t.toLowerCase().contains(q.toLowerCase()),
+                        )
                         .map((t) => PickedRecord(name: t, label: t))
                         .toList(),
                   );
@@ -307,7 +329,9 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                 if (voucherNo == null || outstandingAmount is! num) return null;
                 return _OutstandingInvoice(
                   voucherType:
-                      (map['voucher_type'] ?? map['reference_doctype'] ?? 'Sales Invoice')
+                      (map['voucher_type'] ??
+                              map['reference_doctype'] ??
+                              'Sales Invoice')
                           .toString(),
                   voucherNo: voucherNo,
                   outstandingAmount: outstandingAmount,
@@ -416,6 +440,8 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
     // Declared outside the `try` so `catch` can still reach it to enqueue
     // an offline job.
     Map<String, dynamic>? payload;
+    final submittedCustomer = _customer;
+    final submittedReceipt = _receiptNumberController.text.trim();
     try {
       final allocations = _allocations;
       final references = _outstanding
@@ -436,7 +462,8 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
       payload['paid_amount'] = _enteredAmount;
       payload['received_amount'] = _enteredAmount;
       payload['references'] = references;
-      payload['custom_رقم_الإيصال_الورقي'] = _receiptNumberController.text.trim();
+      payload['custom_رقم_الإيصال_الورقي'] = _receiptNumberController.text
+          .trim();
       final treasury = _treasury;
       if (treasury != null) {
         if (treasury.modeOfPayment != null) {
@@ -471,27 +498,71 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
             content: Text('لا يوجد اتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
           ),
         );
+        if (submittedCustomer != null) {
+          await promptLogVisit(
+            context,
+            customer: submittedCustomer.name,
+            territory: submittedCustomer.subtitle,
+            referenceDoctype: 'Payment Entry',
+            visitType: 'تحصيل',
+            receiptNumber: submittedReceipt,
+          );
+        }
         return true;
       }
 
+      // A draft Payment Entry has no accounting effect.  Create and submit
+      // it as one user operation so the linked invoice outstanding/GL is
+      // updated immediately.  Keep submission errors out of the generic
+      // offline-enqueue catch below: once create succeeded, queueing the
+      // original payload would create a duplicate receipt on retry.
       final created = await ErpService.createDoc('Payment Entry', payload);
+      final createdName = created['name'] as String?;
+      if (createdName == null) {
+        throw const ErpException(
+          'تم إنشاء التحصيل لكن لم يرجع السيرفر رقم السند.',
+          serverRejected: true,
+        );
+      }
+      try {
+        await ErpService.submitDoc('Payment Entry', createdName);
+      } catch (e) {
+        if (!mounted) return false;
+        final message = handleErpError(context, e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم حفظ سند $createdName كمسودة، لكن تعذر ترحيله. ${message ?? ''}',
+            ),
+          ),
+        );
+        context.push(documentDetailRoute('Payment Entry', createdName));
+        return false;
+      }
 
       if (!mounted) return true;
       setState(resetForm);
 
       if (!mounted) return true;
-      final createdName = created['name'] as String?;
-      if (createdName != null) {
-        context.push(documentDetailRoute('Payment Entry', createdName));
-      } else {
-        ScaffoldMessenger.of(
+      if (submittedCustomer != null) {
+        await promptLogVisit(
           context,
-        ).showSnackBar(const SnackBar(content: Text('تم تسجيل التحصيل بنجاح')));
+          customer: submittedCustomer.name,
+          territory: submittedCustomer.subtitle,
+          referenceDoctype: 'Payment Entry',
+          referenceName: createdName,
+          visitType: 'تحصيل',
+          receiptNumber: submittedReceipt,
+        );
       }
+      if (!mounted) return true;
+      context.push(documentDetailRoute('Payment Entry', createdName));
       return true;
     } catch (e) {
       final capturedPayload = payload;
-      if (e is ErpException && e.isConnectivityFailure && capturedPayload != null) {
+      if (e is ErpException &&
+          e.isConnectivityFailure &&
+          capturedPayload != null) {
         await SyncEngine().enqueue(
           type: SyncJobType.paymentEntryCreate,
           payload: capturedPayload,
@@ -512,6 +583,16 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
             content: Text('تعذر الاتصال — تم حفظ التحصيل وسيُرسل تلقائيًا'),
           ),
         );
+        if (submittedCustomer != null) {
+          await promptLogVisit(
+            context,
+            customer: submittedCustomer.name,
+            territory: submittedCustomer.subtitle,
+            referenceDoctype: 'Payment Entry',
+            visitType: 'تحصيل',
+            receiptNumber: submittedReceipt,
+          );
+        }
         return true;
       }
       if (!mounted) return false;
@@ -614,7 +695,9 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _receiptNumberController,
-                      decoration: const InputDecoration(hintText: 'رقم الإيصال في الدفتر الورقي'),
+                      decoration: const InputDecoration(
+                        hintText: 'رقم الإيصال في الدفتر الورقي',
+                      ),
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 24),
@@ -800,8 +883,7 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
                           ),
                         );
                       }),
-                    if (_selectedKeys.isNotEmpty &&
-                        _enteredAmount > 0) ...[
+                    if (_selectedKeys.isNotEmpty && _enteredAmount > 0) ...[
                       const SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),

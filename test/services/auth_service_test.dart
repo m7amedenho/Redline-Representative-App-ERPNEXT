@@ -173,6 +173,23 @@ void main() {
       );
     });
 
+    test('maps a 429 to a clear rate-limit message', () async {
+      _useFakeDio((options) => _jsonResponse({'message': 'Too Many'}, 429));
+
+      await expectLater(
+        AuthService.login(
+          domain: 'company.redtch.com',
+          username: 'red',
+          password: 'wrong',
+        ),
+        throwsA(
+          isA<AuthException>()
+              .having((e) => e.serverRejected, 'serverRejected', true)
+              .having((e) => e.message, 'message', contains('كثرة المحاولات')),
+        ),
+      );
+    });
+
     test(
       'maps a connection error to a network message, not server-rejected',
       () async {

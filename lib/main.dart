@@ -29,6 +29,7 @@ import 'screens/team_dashboard_screen.dart';
 import 'screens/treasury_screen.dart';
 import 'screens/treasury_statement_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'services/auth_service.dart';
 import 'services/sync_engine.dart';
 import 'theme/app_theme.dart';
 import 'widgets/search_picker.dart';
@@ -46,7 +47,11 @@ void main() {
 /// destination the in-app bell (`notifications_screen.dart`) already uses.
 /// `_router` is a plain top-level singleton, so this works from anywhere
 /// (a background FCM callback included) without needing a `BuildContext`.
-void openDocumentFromNotification(String doctype, String name) {
+Future<void> openDocumentFromNotification(String doctype, String name) async {
+  if (!await AuthService.hasStoredSession()) {
+    _router.go('/auth');
+    return;
+  }
   _router.push(documentDetailRoute(doctype, name));
 }
 
@@ -79,21 +84,18 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/sales-order',
-      builder: (context, state) => SalesOrderScreen(
-        editDoc: state.extra as Map<String, dynamic>?,
-      ),
+      builder: (context, state) =>
+          SalesOrderScreen(editDoc: state.extra as Map<String, dynamic>?),
     ),
     GoRoute(
       path: '/sales-invoice',
-      builder: (context, state) => SalesInvoiceScreen(
-        editDoc: state.extra as Map<String, dynamic>?,
-      ),
+      builder: (context, state) =>
+          SalesInvoiceScreen(editDoc: state.extra as Map<String, dynamic>?),
     ),
     GoRoute(
       path: '/payment-entry',
-      builder: (context, state) => PaymentEntryScreen(
-        presetCustomer: state.extra as PickedRecord?,
-      ),
+      builder: (context, state) =>
+          PaymentEntryScreen(presetCustomer: state.extra as PickedRecord?),
     ),
     GoRoute(
       path: '/due-invoices',
@@ -189,7 +191,7 @@ class _RedErpAppState extends State<RedErpApp> {
 
   void _initDeepLinks() {
     _appLinks = AppLinks();
-    
+
     // Listen to incoming deep links
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
       _handleDeepLink(uri);

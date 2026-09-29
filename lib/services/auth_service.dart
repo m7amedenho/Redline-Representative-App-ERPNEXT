@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../local_db/app_database.dart';
 import 'secure_store.dart';
 
 /// Belt-and-braces on top of Dio's own connect/receive timeouts: on some
@@ -68,6 +69,7 @@ class AuthService {
   static const _refreshTokenKey = 'red_erp_refresh_token';
   static const _biometricEnabledKey = 'red_erp_biometric_enabled';
   static const _cachedProfileKey = 'red_erp_cached_profile';
+  static const _sessionUserKey = 'red_erp_session_user';
 
   static SecureStore _store = const RealSecureStore();
   static Dio? _dio;
@@ -135,9 +137,21 @@ class AuthService {
         throw const AuthException('تعذر إتمام تسجيل الدخول، حاول مرة أخرى.');
       }
 
+      final nextScope = '$baseUrl|${username.trim().toLowerCase()}';
+      final previousScope = await _store.read(_sessionUserKey);
+      if (previousScope != nextScope) {
+        try {
+          await AppDatabase.instance.clearAllUserData();
+        } catch (_) {
+          // Login must not fail solely because an old local cache is
+          // unavailable; the database remains private to this app.
+        }
+      }
+
       await _store.write(_domainKey, baseUrl);
       await _store.write(_accessTokenKey, accessToken);
       await _store.write(_refreshTokenKey, refreshToken);
+      await _store.write(_sessionUserKey, nextScope);
 
       return AuthResult(accessToken: accessToken, refreshToken: refreshToken);
     } on DioException catch (e) {
@@ -321,7 +335,9 @@ class AuthService {
         await dio
             .post(
               '/api/method/mobile_control.api.api_auth.logout',
-              options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+              options: Options(
+                headers: {'Authorization': 'Bearer $accessToken'},
+              ),
             )
             .timeout(_hardNetworkTimeout);
       } catch (_) {
@@ -335,10 +351,17 @@ class AuthService {
   }
 
   static Future<void> clearSession() async {
+    try {
+      await AppDatabase.instance.clearAllUserData();
+    } catch (_) {
+      // Secure logout must still finish if local storage is unavailable or
+      // corrupted.  The database itself remains app-private.
+    }
     await _store.delete(_domainKey);
     await _store.delete(_accessTokenKey);
     await _store.delete(_refreshTokenKey);
     await _store.delete(_cachedProfileKey);
+    await _store.delete(_sessionUserKey);
     _cachedUserId = null;
     _cachedRoles = null;
   }
@@ -416,6 +439,26 @@ class AuthService {
       );
     }
 
+    if (response.statusCode == 429) {
+      return const AuthException(
+        'تم إيقاف محاولات الدخول مؤقتًا لكثرة المحاولات. انتظر قليلًا ثم حاول مرة أخرى.',
+        serverRejected: true,
+      );
+    }
+
+    if (response.statusCode == 417 && data is Map) {
+      final serverMessage = data['message']?.toString();
+      if (serverMessage != null && serverMessage.trim().isNotEmpty) {
+        return AuthException(serverMessage, serverRejected: true);
+      }
+    }
+
+    if ((response.statusCode ?? 0) >= 500) {
+      return const AuthException(
+        'خدمة تسجيل الدخول غير متاحة مؤقتًا على السيرفر. حاول بعد دقائق.',
+      );
+    }
+
     return const AuthException(
       'حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.',
       serverRejected: true,
@@ -435,8 +478,21 @@ class AuthService {
           'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
         );
       case DioExceptionType.connectionError:
+        final detail = '${e.message ?? ''} ${e.error ?? ''}'.toLowerCase();
+        if (detail.contains('failed host lookup') ||
+            detail.contains('name or service not known') ||
+            detail.contains('nodename nor servname')) {
+          return const AuthException(
+            'تعذر العثور على عنوان السيرفر (DNS). بدّل الشبكة أو أعد المحاولة.',
+          );
+        }
+        if (detail.contains('certificate') || detail.contains('handshake')) {
+          return const AuthException(
+            'تعذر تأمين الاتصال بالسيرفر. تأكد من تاريخ الهاتف وشهادة HTTPS.',
+          );
+        }
         return const AuthException(
-          'تعذر الاتصال بالسيرفر، تأكد من صحة الدومين واتصالك بالإنترنت.',
+          'تعذر الاتصال بالسيرفر. تأكد من الدومين والإنترنت أو جرب شبكة أخرى.',
         );
       default:
         return const AuthException('حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.');

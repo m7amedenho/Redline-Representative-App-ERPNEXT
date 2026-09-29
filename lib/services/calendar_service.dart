@@ -1,4 +1,5 @@
 import 'package:device_calendar/device_calendar.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 /// Adds payment-due reminders straight into the device's own calendar app
@@ -11,6 +12,17 @@ import 'package:timezone/timezone.dart' as tz;
 /// for this.
 class CalendarService {
   static final _plugin = DeviceCalendarPlugin();
+  static bool _timezoneReady = false;
+  static String? lastError;
+
+  static void _ensureTimezone() {
+    if (_timezoneReady) return;
+    tz_data.initializeTimeZones();
+    // The ERP installation and its sales operation use Cairo dates.  A
+    // named IANA zone preserves DST rules, unlike a fixed UTC offset.
+    tz.setLocalLocation(tz.getLocation('Africa/Cairo'));
+    _timezoneReady = true;
+  }
 
   /// Ensures calendar permission, then picks a real writable calendar to
   /// add events to — prefers one that isn't read-only (a genuine synced
@@ -29,15 +41,13 @@ class CalendarService {
     final calendars = calendarsResult.data;
     if (calendars == null || calendars.isEmpty) return null;
 
-    final writable = calendars.where((c) => c.isReadOnly == false).toList();
-    
-    // Pick first writable, fallback to default, fallback to first available
-    if (writable.isNotEmpty) return writable.first.id;
-    
-    final defaultCal = calendars.where((c) => c.isDefault == true).toList();
-    if (defaultCal.isNotEmpty) return defaultCal.first.id;
+    final writable = calendars
+        .where((c) => c.isReadOnly == false && c.id != null)
+        .toList();
+    if (writable.isEmpty) return null;
 
-    return calendars.first.id;
+    final defaults = writable.where((c) => c.isDefault == true).toList();
+    return (defaults.isNotEmpty ? defaults.first : writable.first).id;
   }
 
   /// Adds one reminder event for a single payment-schedule due date — a
@@ -53,33 +63,51 @@ class CalendarService {
     required num amount,
     required DateTime dueDate,
   }) async {
-    final calendarId = await _resolveWritableCalendarId();
-    if (calendarId == null) return false;
+    lastError = null;
+    try {
+      _ensureTimezone();
+      final calendarId = await _resolveWritableCalendarId();
+      if (calendarId == null) {
+        lastError = 'لا يوجد تقويم قابل للكتابة أو لم يتم منح الصلاحية.';
+        return false;
+      }
 
-    final start = tz.TZDateTime(
-      tz.local,
-      dueDate.year,
-      dueDate.month,
-      dueDate.day,
-      9,
-    );
-    final end = start.add(const Duration(minutes: 30));
+      final start = tz.TZDateTime(
+        tz.local,
+        dueDate.year,
+        dueDate.month,
+        dueDate.day,
+        9,
+      );
+      final end = start.add(const Duration(minutes: 30));
 
-    final event = Event(
-      calendarId,
-      title: 'استحقاق دفعة — $customerName',
-      description:
-          'مستند: $documentName\n'
-          'المبلغ المستحق: ${amount.toStringAsFixed(2)} ج.م',
-      start: start,
-      end: end,
-      reminders: [
-        Reminder(minutes: 0), // 9:00 AM on the due date itself
-        Reminder(minutes: 24 * 60), // one day before
-      ],
-    );
+      final event = Event(
+        calendarId,
+        title: 'استحقاق دفعة — $customerName',
+        description:
+            'مستند: $documentName\n'
+            'المبلغ المستحق: ${amount.toStringAsFixed(2)} ج.م',
+        start: start,
+        end: end,
+        reminders: [
+          Reminder(minutes: 0),
+          Reminder(minutes: 24 * 60),
+        ],
+      );
 
-    final result = await _plugin.createOrUpdateEvent(event);
-    return result?.data != null;
+      final result = await _plugin.createOrUpdateEvent(event);
+      if (result?.data != null) return true;
+      lastError = result?.errors
+          .map((e) => e.errorMessage)
+          .whereType<String>()
+          .join('\n');
+      if (lastError?.isEmpty ?? true) {
+        lastError = 'رفض تطبيق التقويم إضافة الحدث.';
+      }
+      return false;
+    } catch (e) {
+      lastError = e.toString();
+      return false;
+    }
   }
 }

@@ -116,7 +116,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
               name: c['name'] as String,
               label: (c['customer_name'] as String?) ?? c['name'] as String,
               territory: c['territory'] as String?,
-              disabled: ((c['disabled'] as num?) ?? 0) == 1 || ((c['is_frozen'] as num?) ?? 0) == 1,
+              disabled:
+                  ((c['disabled'] as num?) ?? 0) == 1 ||
+                  ((c['is_frozen'] as num?) ?? 0) == 1,
             ),
           )
           .toList();
@@ -147,7 +149,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
               ['territory', 'in', effectiveTerritories],
             if (query.isNotEmpty) ['customer_name', 'like', '%$query%'],
           ],
-          fields: const ['name', 'customer_name', 'territory', 'disabled', 'is_frozen'],
+          fields: const [
+            'name',
+            'customer_name',
+            'territory',
+            'disabled',
+            'is_frozen',
+          ],
           limit: 50,
         ),
       );
@@ -255,27 +263,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
   /// نفس حساب "المديونية الحالية" الموجود في [CustomerStatementScreen] —
   /// مجموع GL Entry (مدين - دائن) — بس بدون تفاصيل الحركات، رقم سريع بس
   /// يظهر في شيت العميل هنا.
-  Future<num?> _fetchCustomerDebt(String customer) async {
-    try {
-      final list = await ErpService.getList(
-        'GL Entry',
-        filters: [
-          ['party_type', '=', 'Customer'],
-          ['party', '=', customer],
-          ['is_cancelled', '=', 0],
-        ],
-        fields: const ['debit', 'credit'],
-        limit: 500,
-      );
-      num balance = 0;
-      for (final entry in list) {
-        balance +=
-            ((entry['debit'] as num?) ?? 0) - ((entry['credit'] as num?) ?? 0);
-      }
-      return balance;
-    } catch (_) {
-      return null;
-    }
+  Future<Map<String, dynamic>?> _fetchCustomerCredit(String customer) {
+    return ErpService.getCustomerCreditStatus(customer);
   }
 
   void _openCustomerActions(_CustomerRow customer) {
@@ -303,10 +292,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                FutureBuilder<num?>(
-                  future: _fetchCustomerDebt(customer.name),
+                FutureBuilder<Map<String, dynamic>?>(
+                  future: _fetchCustomerCredit(customer.name),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 4),
                         child: SizedBox(
@@ -316,14 +305,38 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         ),
                       );
                     }
-                    final debt = snapshot.data;
-                    if (debt == null) return const SizedBox.shrink();
-                    return Text(
-                      'المديونية الحالية: ${debt.toStringAsFixed(2)} ج.م',
-                      style: const TextStyle(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                    final credit = snapshot.data;
+                    if (credit == null) return const SizedBox.shrink();
+                    final limit = (credit['credit_limit'] as num?) ?? 0;
+                    final outstanding = (credit['outstanding'] as num?) ?? 0;
+                    final available =
+                        (credit['available'] as num?) ?? (limit - outstanding);
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGray,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('سقف الدين: ${limit.toStringAsFixed(2)} ج.م'),
+                          Text(
+                            'المديونية: ${outstanding.toStringAsFixed(2)} ج.م',
+                          ),
+                          Text(
+                            available >= 0
+                                ? 'المتاح: ${available.toStringAsFixed(2)} ج.م'
+                                : 'تجاوز السقف: ${(-available).toStringAsFixed(2)} ج.م',
+                            style: TextStyle(
+                              color: available >= 0
+                                  ? AppColors.success
+                                  : AppColors.accent,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -482,7 +495,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       itemBuilder: (context, i) {
         final customer = _results[i];
         final isDisabled = customer.disabled;
-        
+
         return Material(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(AppRadius.card),
@@ -503,7 +516,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        isDisabled ? Icons.block_rounded : Icons.storefront_rounded,
+                        isDisabled
+                            ? Icons.block_rounded
+                            : Icons.storefront_rounded,
                         color: isDisabled ? AppColors.midGray : AppColors.black,
                         size: 18,
                       ),
@@ -520,7 +535,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
-                              color: isDisabled ? AppColors.midGray : AppColors.black,
+                              color: isDisabled
+                                  ? AppColors.midGray
+                                  : AppColors.black,
                             ),
                           ),
                           if (isDisabled) ...[

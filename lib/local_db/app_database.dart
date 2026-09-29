@@ -30,6 +30,29 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  /// Removes every account-owned local artifact on logout.  The current
+  /// schema predates per-account owner columns, so retaining these rows
+  /// would let the next account on the same phone see cached documents or
+  /// submit the previous user's queued actions.  Deleting is the safe
+  /// isolation boundary; unsent work must be synced before signing out.
+  Future<void> clearAllUserData() async {
+    final jobs = await select(syncJobs).get();
+    await transaction(() async {
+      await delete(referenceCache).go();
+      await delete(syncJobs).go();
+    });
+    for (final job in jobs) {
+      final path = job.localPhotoPath;
+      if (path == null || path.isEmpty) continue;
+      try {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } on FileSystemException {
+        // The picker/app cache may already have removed it.
+      }
+    }
+  }
 }
 
 LazyDatabase _openConnection() {

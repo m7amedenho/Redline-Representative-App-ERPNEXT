@@ -41,7 +41,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
   String? _pendingError;
   String? _receivingName;
   String? _justReceivedName;
-  
+
   final Map<String, Map<String, double>> _transferQuantities = {};
 
   List<Map<String, dynamic>> _completedTransfers = [];
@@ -123,18 +123,18 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       _pendingTransfers = rows;
       _pendingFromCache = fromCache;
       _loadingPending = false;
-      
+
       for (final row in rows) {
         final name = row['name'] as String;
         if (!_transferQuantities.containsKey(name)) {
           final items = row['items'] as List? ?? [];
           final qtys = <String, double>{};
           for (final item in items) {
-             if (item is Map) {
-               final itemCode = item['item_code']?.toString() ?? '';
-               final qty = (item['qty'] as num?)?.toDouble() ?? 0.0;
-               if (itemCode.isNotEmpty) qtys[itemCode] = qty;
-             }
+            if (item is Map) {
+              final itemCode = item['item_code']?.toString() ?? '';
+              final qty = (item['qty'] as num?)?.toDouble() ?? 0.0;
+              if (itemCode.isNotEmpty) qtys[itemCode] = qty;
+            }
           }
           _transferQuantities[name] = qtys;
         }
@@ -195,17 +195,19 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
 
   Future<bool> _receiveTransfer(String stockEntryName) async {
     setState(() => _receivingName = stockEntryName);
-    
+
     try {
       final qtys = _transferQuantities[stockEntryName] ?? {};
       final itemsToSubmit = qtys.entries
           .where((e) => e.value > 0)
           .map((e) => {'item_code': e.key, 'qty': e.value})
           .toList();
-          
+
       if (itemsToSubmit.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا يمكن استلام كمية صفر لجميع الأصناف')),
+          const SnackBar(
+            content: Text('لا يمكن استلام كمية صفر لجميع الأصناف'),
+          ),
         );
         setState(() => _receivingName = null);
         return false;
@@ -215,26 +217,31 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         stockEntryName: stockEntryName,
         items: itemsToSubmit,
       );
-      
+
       if (!mounted) return false;
-      
+
       setState(() {
         _justReceivedName = stockEntryName;
         _receivingName = null;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تم تحديث حالة المخزون بنجاح ✅', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(
+            'تم تحديث حالة المخزون بنجاح ✅',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
-      
+
       await Future.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return true;
-      
+
       setState(() {
-        final idx = _pendingTransfers.indexWhere((r) => r['name'] == stockEntryName);
+        final idx = _pendingTransfers.indexWhere(
+          (r) => r['name'] == stockEntryName,
+        );
         if (idx != -1) {
           final confirmed = _pendingTransfers[idx];
           _pendingTransfers.removeAt(idx);
@@ -242,7 +249,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
         }
         _justReceivedName = null;
       });
-      
+
       return true;
     } catch (e) {
       if (!mounted) return false;
@@ -266,16 +273,31 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       search: (query) async {
         final list = await ErpService.getList(
           'Item',
-          filters: query.isEmpty ? null : [['item_name', 'like', '%$query%']],
+          filters: query.isEmpty
+              ? null
+              : [
+                  ['item_name', 'like', '%$query%'],
+                ],
           fields: const ['name', 'item_name'],
           limit: 20,
         );
-        return list.map((i) => PickedRecord(name: i['name'] as String, label: (i['item_name'] as String?) ?? i['name'] as String)).toList();
+        return list
+            .map(
+              (i) => PickedRecord(
+                name: i['name'] as String,
+                label: (i['item_name'] as String?) ?? i['name'] as String,
+              ),
+            )
+            .toList();
       },
     );
 
     if (result == null) return;
-    setState(() => _lines.add(_RequestLine(itemCode: result.name, itemName: result.label)));
+    setState(
+      () => _lines.add(
+        _RequestLine(itemCode: result.name, itemName: result.label),
+      ),
+    );
   }
 
   Future<void> _pickRequiredByDate() async {
@@ -300,16 +322,25 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
     final fields = {
       'material_request_type': 'Material Transfer',
       'schedule_date': _requiredByDate.toIso8601String().split('T').first,
-      'items': _lines.map((l) => {'item_code': l.itemCode, 'qty': l.qty}).toList(),
+      'items': _lines
+          .map((l) => {'item_code': l.itemCode, 'qty': l.qty})
+          .toList(),
     };
 
     try {
       if (!SyncStatusService().isOnline) {
-        await SyncEngine().enqueue(type: SyncJobType.materialRequestCreate, payload: fields);
+        await SyncEngine().enqueue(
+          type: SyncJobType.materialRequestCreate,
+          payload: fields,
+        );
         _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(() => _lines.clear());
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يوجد اتصال — تم الحفظ وسيُرسل تلقائيًا')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا يوجد اتصال — تم الحفظ وسيُرسل تلقائيًا'),
+          ),
+        );
         return true;
       }
       final created = await ErpService.createDoc('Material Request', fields);
@@ -319,16 +350,25 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       if (createdName != null) {
         context.push(documentDetailRoute('Material Request', createdName));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إنشاء طلب المواد بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إنشاء طلب المواد بنجاح')),
+        );
       }
       return true;
     } catch (e) {
       if (e is ErpException && e.isConnectivityFailure) {
-        await SyncEngine().enqueue(type: SyncJobType.materialRequestCreate, payload: fields);
+        await SyncEngine().enqueue(
+          type: SyncJobType.materialRequestCreate,
+          payload: fields,
+        );
         _lastSubmitWasQueued = true;
         if (!mounted) return true;
         setState(() => _lines.clear());
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر الاتصال — تم الحفظ وسيُرسل تلقائيًا')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — تم الحفظ وسيُرسل تلقائيًا'),
+          ),
+        );
         return true;
       }
       if (!mounted) return false;
@@ -391,7 +431,10 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        const Icon(Icons.event_rounded, color: AppColors.accent),
+                        const Icon(
+                          Icons.event_rounded,
+                          color: AppColors.accent,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -443,7 +486,9 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                         IconButton(
                           icon: const Icon(Icons.remove_circle_outline_rounded),
                           color: AppColors.midGray,
-                          onPressed: line.qty > 1 ? () => setState(() => line.qty -= 1) : null,
+                          onPressed: line.qty > 1
+                              ? () => setState(() => line.qty -= 1)
+                              : null,
                         ),
                         SizedBox(
                           width: 28,
@@ -459,8 +504,12 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                           onPressed: () => setState(() => line.qty += 1),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, color: AppColors.midGray),
-                          onPressed: () => setState(() => _lines.removeAt(index)),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.midGray,
+                          ),
+                          onPressed: () =>
+                              setState(() => _lines.removeAt(index)),
                         ),
                       ],
                     ),
@@ -495,7 +544,11 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(_pendingError!, style: const TextStyle(color: AppColors.accent), textAlign: TextAlign.center),
+          child: Text(
+            _pendingError!,
+            style: const TextStyle(color: AppColors.accent),
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
@@ -516,12 +569,14 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                 final receiving = _receivingName == name;
                 final justReceived = _justReceivedName == name;
                 final items = row['items'] as List? ?? [];
-                
+
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: justReceived ? Colors.green.shade50 : AppColors.white,
+                    color: justReceived
+                        ? Colors.green.shade50
+                        : AppColors.white,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                     border: Border.all(
                       color: justReceived ? Colors.green : Colors.transparent,
@@ -530,7 +585,9 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                   ),
                   child: Card(
                     margin: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.card)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                    ),
                     clipBehavior: Clip.antiAlias,
                     elevation: 0,
                     color: Colors.transparent,
@@ -538,8 +595,12 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                       title: Row(
                         children: [
                           Icon(
-                            justReceived ? Icons.check_circle : Icons.local_shipping_rounded,
-                            color: justReceived ? Colors.green : AppColors.accent,
+                            justReceived
+                                ? Icons.check_circle
+                                : Icons.local_shipping_rounded,
+                            color: justReceived
+                                ? Colors.green
+                                : AppColors.accent,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -549,20 +610,26 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                                 Text(
                                   name,
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w700, 
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 15,
-                                    color: justReceived ? Colors.green.shade700 : AppColors.black,
+                                    color: justReceived
+                                        ? Colors.green.shade700
+                                        : AppColors.black,
                                   ),
                                 ),
                                 if (row['posting_date'] != null)
                                   Text(
                                     row['posting_date'].toString(),
-                                    style: const TextStyle(color: AppColors.midGray, fontSize: 12),
+                                    style: const TextStyle(
+                                      color: AppColors.midGray,
+                                      fontSize: 12,
+                                    ),
                                   ),
                               ],
                             ),
                           ),
-                          if (!justReceived) RowSyncIcon(fromCache: _pendingFromCache),
+                          if (!justReceived)
+                            RowSyncIcon(fromCache: _pendingFromCache),
                         ],
                       ),
                       children: [
@@ -575,17 +642,24 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                             children: [
                               const Text(
                                 'الأصناف المستلمة (تأكد من الكمية في حالة النواقص):',
-                                style: TextStyle(fontSize: 13, color: AppColors.midGray, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.midGray,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               ...items.map((item) {
                                 if (item is! Map) return const SizedBox();
-                                final itemCode = item['item_code']?.toString() ?? '';
-                                final itemName = item['item_name']?.toString() ?? itemCode;
-                                final originalQty = (item['qty'] as num?)?.toDouble() ?? 0.0;
-                                final uom = item['uom']?.toString() ?? '';
-                                final currentQty = _transferQuantities[name]?[itemCode] ?? 0.0;
-                                
+                                final itemCode =
+                                    item['item_code']?.toString() ?? '';
+                                final itemName =
+                                    item['item_name']?.toString() ?? itemCode;
+                                final originalQty =
+                                    (item['qty'] as num?)?.toDouble() ?? 0.0;
+                                final currentQty =
+                                    _transferQuantities[name]?[itemCode] ?? 0.0;
+
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: Row(
@@ -595,41 +669,83 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                                           itemName,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Container(
                                         decoration: BoxDecoration(
                                           color: AppColors.white,
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: AppColors.lightGray),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.lightGray,
+                                          ),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.remove, size: 18, color: AppColors.midGray),
-                                              onPressed: currentQty > 0 ? () {
-                                                setState(() => _transferQuantities[name]?[itemCode] = currentQty - 1);
-                                              } : null,
-                                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                              icon: const Icon(
+                                                Icons.remove,
+                                                size: 18,
+                                                color: AppColors.midGray,
+                                              ),
+                                              onPressed: currentQty > 0
+                                                  ? () {
+                                                      setState(
+                                                        () =>
+                                                            _transferQuantities[name]?[itemCode] =
+                                                                currentQty - 1,
+                                                      );
+                                                    }
+                                                  : null,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 36,
+                                                minHeight: 36,
+                                              ),
                                               padding: EdgeInsets.zero,
                                             ),
                                             Container(
                                               width: 40,
                                               alignment: Alignment.center,
                                               child: Text(
-                                                currentQty.toStringAsFixed(currentQty.truncateToDouble() == currentQty ? 0 : 2),
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                                currentQty.toStringAsFixed(
+                                                  currentQty.truncateToDouble() ==
+                                                          currentQty
+                                                      ? 0
+                                                      : 2,
+                                                ),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                ),
                                               ),
                                             ),
                                             IconButton(
-                                              icon: const Icon(Icons.add, size: 18, color: AppColors.accent),
-                                              onPressed: currentQty < originalQty ? () {
-                                                setState(() => _transferQuantities[name]?[itemCode] = currentQty + 1);
-                                              } : null,
-                                              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                              icon: const Icon(
+                                                Icons.add,
+                                                size: 18,
+                                                color: AppColors.accent,
+                                              ),
+                                              onPressed:
+                                                  currentQty < originalQty
+                                                  ? () {
+                                                      setState(
+                                                        () =>
+                                                            _transferQuantities[name]?[itemCode] =
+                                                                currentQty + 1,
+                                                      );
+                                                    }
+                                                  : null,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 36,
+                                                minHeight: 36,
+                                              ),
                                               padding: EdgeInsets.zero,
                                             ),
                                           ],
@@ -642,7 +758,14 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                               const SizedBox(height: 16),
                               if (justReceived)
                                 const Center(
-                                  child: Text('تم تأكيد الاستلام بنجاح ✅', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  child: Text(
+                                    'تم تأكيد الاستلام بنجاح ✅',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 )
                               else
                                 Opacity(
@@ -674,7 +797,11 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(_completedError!, style: const TextStyle(color: AppColors.accent), textAlign: TextAlign.center),
+          child: Text(
+            _completedError!,
+            style: const TextStyle(color: AppColors.accent),
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
@@ -693,7 +820,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                 final row = _completedTransfers[index];
                 final name = row['name'] as String;
                 final items = row['items'] as List? ?? [];
-                
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
@@ -714,12 +841,19 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                             children: [
                               Text(
                                 name,
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.green.shade800),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                  color: Colors.green.shade800,
+                                ),
                               ),
                               if (row['posting_date'] != null)
                                 Text(
                                   row['posting_date'].toString(),
-                                  style: const TextStyle(color: AppColors.midGray, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: AppColors.midGray,
+                                    fontSize: 12,
+                                  ),
                                 ),
                             ],
                           ),
@@ -735,10 +869,13 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: items.map((item) {
                             if (item is! Map) return const SizedBox();
-                            final itemCode = item['item_code']?.toString() ?? '';
-                            final itemName = item['item_name']?.toString() ?? itemCode;
-                            final qty = (item['qty'] as num?)?.toDouble() ?? 0.0;
-                            
+                            final itemCode =
+                                item['item_code']?.toString() ?? '';
+                            final itemName =
+                                item['item_name']?.toString() ?? itemCode;
+                            final qty =
+                                (item['qty'] as num?)?.toDouble() ?? 0.0;
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Row(
@@ -752,8 +889,13 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
                                     ),
                                   ),
                                   Text(
-                                    qty.toStringAsFixed(qty.truncateToDouble() == qty ? 0 : 2),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                    qty.toStringAsFixed(
+                                      qty.truncateToDouble() == qty ? 0 : 2,
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -772,22 +914,39 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen>
   Widget _emptyCard(String text) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(AppRadius.card)),
-      child: Center(child: Text(text, style: const TextStyle(color: AppColors.midGray))),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Center(
+        child: Text(text, style: const TextStyle(color: AppColors.midGray)),
+      ),
     );
   }
 
   Widget _errorRow() {
     return Row(
       children: [
-        const Icon(Icons.error_outline_rounded, color: AppColors.accent, size: 16),
+        const Icon(
+          Icons.error_outline_rounded,
+          color: AppColors.accent,
+          size: 16,
+        ),
         const SizedBox(width: 6),
-        Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.accent, fontSize: 13))),
+        Expanded(
+          child: Text(
+            _error!,
+            style: const TextStyle(color: AppColors.accent, fontSize: 13),
+          ),
+        ),
       ],
     );
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800));
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+    );
   }
 }

@@ -119,9 +119,7 @@ class SyncEngine {
     try {
       final payload = jsonDecode(job.payload) as Map<String, dynamic>;
       final result = await _replay(job, payload);
-      await (_db.update(
-        _db.syncJobs,
-      )..where((t) => t.id.equals(job.id))).write(
+      await (_db.update(_db.syncJobs)..where((t) => t.id.equals(job.id))).write(
         SyncJobsCompanion(
           status: Value(SyncJobStatus.success.name),
           resultDoctype: Value(result.doctype),
@@ -133,9 +131,7 @@ class SyncEngine {
       final message = e is ErpException
           ? e.message
           : 'حدث خطأ غير متوقع أثناء إعادة الإرسال';
-      await (_db.update(
-        _db.syncJobs,
-      )..where((t) => t.id.equals(job.id))).write(
+      await (_db.update(_db.syncJobs)..where((t) => t.id.equals(job.id))).write(
         SyncJobsCompanion(
           status: Value(SyncJobStatus.failed.name),
           lastError: Value(message),
@@ -147,9 +143,7 @@ class SyncEngine {
   }
 
   Future<void> _setStatus(int jobId, SyncJobStatus status) {
-    return (_db.update(
-      _db.syncJobs,
-    )..where((t) => t.id.equals(jobId))).write(
+    return (_db.update(_db.syncJobs)..where((t) => t.id.equals(jobId))).write(
       SyncJobsCompanion(status: Value(status.name)),
     );
   }
@@ -158,9 +152,7 @@ class SyncEngine {
   /// chain uses this) so a retry after a later step fails doesn't repeat
   /// an earlier step that already succeeded server-side.
   Future<void> _checkpoint(int jobId, Map<String, dynamic> steps) {
-    return (_db.update(
-      _db.syncJobs,
-    )..where((t) => t.id.equals(jobId))).write(
+    return (_db.update(_db.syncJobs)..where((t) => t.id.equals(jobId))).write(
       SyncJobsCompanion(steps: Value(jsonEncode(steps))),
     );
   }
@@ -175,7 +167,7 @@ class SyncEngine {
       case 'salesInvoiceCreate':
         return _replaySalesInvoiceCreate(payload);
       case 'paymentEntryCreate':
-        return _replayPaymentEntryCreate(payload);
+        return _replayPaymentEntryCreate(job, payload);
       case 'customerVisitCreate':
         return _replayCustomerVisitCreate(payload);
       case 'materialRequestCreate':
@@ -235,10 +227,26 @@ class SyncEngine {
   /// (already fetched live when the rep picked the customer) plus purely
   /// local selections, so this is a direct, single `createDoc` call.
   Future<_ReplayResult> _replayPaymentEntryCreate(
+    SyncJob job,
     Map<String, dynamic> payload,
   ) async {
-    final created = await ErpService.createDoc('Payment Entry', payload);
-    return _ReplayResult('Payment Entry', created['name'] as String);
+    // Persist the created name before submit.  If connectivity drops after
+    // creation, retrying the queue submits that same draft instead of
+    // creating a second receipt for the same cash collection.
+    var name = job.resultName;
+    if (name == null || name.isEmpty) {
+      final created = await ErpService.createDoc('Payment Entry', payload);
+      name = created['name'] as String;
+      await (_db.update(_db.syncJobs)..where((t) => t.id.equals(job.id))).write(
+        SyncJobsCompanion(
+          resultDoctype: const Value('Payment Entry'),
+          resultName: Value(name),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+    }
+    await ErpService.submitDoc('Payment Entry', name);
+    return _ReplayResult('Payment Entry', name);
   }
 
   Future<_ReplayResult> _replayCustomerVisitCreate(
@@ -532,10 +540,7 @@ class SyncEngine {
       account: payload['account'] as String?,
     );
 
-    final createdClaim = await ErpService.createDoc(
-      'Expense Claim',
-      claimBody,
-    );
+    final createdClaim = await ErpService.createDoc('Expense Claim', claimBody);
     final claimName = createdClaim['name'] as String;
     await ErpService.submitDoc('Expense Claim', claimName);
     return _ReplayResult('Expense Claim', claimName);

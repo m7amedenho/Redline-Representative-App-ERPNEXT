@@ -20,6 +20,7 @@ import '../utils/doc_status.dart';
 import '../utils/erp_error_handling.dart';
 import '../utils/html_text.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/log_visit_prompt.dart';
 import '../widgets/search_picker.dart';
 import '../widgets/swipe_to_confirm_button.dart';
 import 'treasury_screen.dart';
@@ -60,28 +61,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Map<String, dynamic>? _doc;
   bool _loadingDoc = true;
   String? _docError;
-  num? _customerDebt;
+  Map<String, dynamic>? _customerCredit;
 
   Future<void> _loadCustomerDebt(Map<String, dynamic> doc) async {
     final customer = doc['customer']?.toString() ?? doc['party']?.toString();
     if (customer == null) return;
-    
     try {
-      final list = await ErpService.getList(
-        'GL Entry',
-        filters: [
-          ['party_type', '=', 'Customer'],
-          ['party', '=', customer],
-          ['is_cancelled', '=', 0],
-        ],
-        fields: const ['debit', 'credit'],
-        limit: 500,
+      final credit = await ErpService.getCustomerCreditStatus(
+        customer,
+        company: doc['company']?.toString(),
       );
-      num balance = 0;
-      for (final entry in list) {
-        balance += ((entry['debit'] as num?) ?? 0) - ((entry['credit'] as num?) ?? 0);
-      }
-      if (mounted) setState(() => _customerDebt = balance);
+      if (mounted) setState(() => _customerCredit = credit);
     } catch (_) {
       // Ignore
     }
@@ -119,6 +109,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
   List<Map<String, dynamic>> _comments = [];
   bool _loadingComments = true;
+  List<Map<String, dynamic>> _activity = [];
+  bool _loadingActivity = true;
   final _commentController = TextEditingController();
   bool _sendingComment = false;
   final Map<String, String> _pickedMentions = {};
@@ -128,6 +120,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     super.initState();
     _loadDocument();
     _loadComments();
+    _loadActivity();
   }
 
   @override
@@ -178,6 +171,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         _loadUserRoles(),
         _loadOriginState(),
         _loadComments(),
+        _loadActivity(),
         _loadCustomerDebt(doc),
       ]);
     } catch (_) {
@@ -462,7 +456,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     // workflow it stays 0 through every intermediate approved state, only
     // flipping to 1 at final approval. Whether the send actually worked is
     // whether `workflow_state` itself moved.
-    final sent = updated['workflow_state'] != beforeState;
+    final sent =
+        updated['workflow_state'] != beforeState ||
+        (((updated['docstatus'] as num?)?.toInt() ?? 0) == 1 &&
+            ((doc['docstatus'] as num?)?.toInt() ?? 0) == 0);
     if (sent) {
       ScaffoldMessenger.of(
         context,
@@ -653,9 +650,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تعذر الاتصال — سيُحفظ الخصم تلقائيًا'),
-          ),
+          const SnackBar(content: Text('تعذر الاتصال — سيُحفظ الخصم تلقائيًا')),
         );
         return;
       }
@@ -690,9 +685,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       await Printing.sharePdf(bytes: bytes, filename: '${widget.name}.pdf');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر إنشاء ملف PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('تعذر إنشاء ملف PDF: $e')));
     } finally {
       if (mounted) setState(() => _sharingPdf = false);
     }
@@ -947,13 +942,48 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       }
 
       final created = await ErpService.createDoc('Payment Entry', payload);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تم تسجيل التحصيل بنجاح')));
-      await _loadDocument();
       final createdName = created['name'] as String?;
-      if (createdName != null && mounted) {
+      if (createdName == null) {
+        throw const ErpException(
+          'تم إنشاء التحصيل لكن لم يرجع السيرفر رقم السند.',
+          serverRejected: true,
+        );
+      }
+      try {
+        await ErpService.submitDoc('Payment Entry', createdName);
+      } catch (e) {
+        if (!mounted) return;
+        final message = handleErpError(context, e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'تم حفظ سند $createdName كمسودة، لكن تعذر ترحيله. ${message ?? ''}',
+            ),
+          ),
+        );
+        context.push(documentDetailRoute('Payment Entry', createdName));
+        return;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تسجيل وترحيل التحصيل بنجاح')),
+      );
+      final customer =
+          draft['party']?.toString() ?? _doc?['customer']?.toString();
+      if (customer != null && customer.isNotEmpty) {
+        await promptLogVisit(
+          context,
+          customer: customer,
+          territory: _doc?['territory']?.toString(),
+          referenceDoctype: 'Payment Entry',
+          referenceName: createdName,
+          visitType: 'تحصيل',
+          receiptNumber: receiptNumber,
+        );
+      }
+      if (!mounted) return;
+      await _loadDocument();
+      if (mounted) {
         context.push(documentDetailRoute('Payment Entry', createdName));
       }
     } catch (e) {
@@ -994,7 +1024,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             content: Text(
               added
                   ? 'تمت إضافة التذكير للتقويم'
-                  : 'تعذر إضافة التذكير — تأكد من صلاحية التقويم على الجهاز',
+                  : (CalendarService.lastError ?? 'تعذر إضافة التذكير للتقويم'),
             ),
           ),
         );
@@ -1031,7 +1061,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           (rows[i]['payment_amount'] as num?) ??
           0;
       total++;
-      final added = await _addCalendarReminder(i, customerName, amount, dueDate);
+      final added = await _addCalendarReminder(
+        i,
+        customerName,
+        amount,
+        dueDate,
+      );
       if (added) succeeded++;
     }
     if (!mounted) return;
@@ -1263,6 +1298,27 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     }
   }
 
+  Future<void> _loadActivity() async {
+    if (mounted) setState(() => _loadingActivity = true);
+    try {
+      final rows = await ErpService.callMethodList(
+        '/api/method/red_app.api.get_document_activity',
+        params: {'doctype': widget.doctype, 'name': widget.name},
+      );
+      if (!mounted) return;
+      setState(() {
+        _activity = rows
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList();
+      });
+    } catch (_) {
+      if (mounted) setState(() => _activity = []);
+    } finally {
+      if (mounted) setState(() => _loadingActivity = false);
+    }
+  }
+
   /// ❓ Not confirmed against this server — Frappe's own frontend inserts
   /// mentions into a comment's HTML `content` as
   /// `<span class="mention" data-id="user@email">@Full Name</span>`, which
@@ -1471,7 +1527,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     // instead so the user picks explicitly.
     final docstatus = (doc['docstatus'] as num?)?.toInt() ?? 0;
     final canSend =
-        docstatus == 0 && _transitions.length == 1 && !_loadingTransitions;
+        docstatus == 0 &&
+        !_loadingTransitions &&
+        (_transitions.length == 1 ||
+            (widget.doctype == 'Payment Entry' && _transitions.isEmpty));
     final showActionChips = _transitions.length > 1;
     final canEditDocument = _canEditCurrentState;
     final isInitialState =
@@ -1542,10 +1601,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     ),
                   ),
                 ],
-                if (_customerDebt != null) ...[
+                if (_customerCredit != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'المديونية الحالية: ${_customerDebt!.toStringAsFixed(2)} ج.م',
+                    'سقف الدين: ${((_customerCredit!['credit_limit'] as num?) ?? 0).toStringAsFixed(2)} ج.م  •  '
+                    'المديونية: ${((_customerCredit!['outstanding'] as num?) ?? 0).toStringAsFixed(2)} ج.م  •  '
+                    'المتاح: ${((_customerCredit!['available'] as num?) ?? 0).toStringAsFixed(2)} ج.م',
                     style: const TextStyle(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -1589,6 +1650,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ?_buildItemsSection(doc),
           ?_buildTotalsSection(doc),
           ?_buildPaymentScheduleSection(doc),
+          ?_buildSalesTeamSection(doc),
           if (widget.doctype == 'Sales Order' ||
               widget.doctype == 'Sales Invoice' ||
               widget.doctype == 'Customer' ||
@@ -1714,7 +1776,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   // label actually is (e.g. "إرسال للاعتماد" the first time,
                   // "إعادة إرسال للاعتماد" after a revision request), never
                   // a hardcoded "send" string.
-                  label: 'اسحب لـ ${_transitions.first['action'] ?? 'الإرسال'}',
+                  label: _transitions.isEmpty
+                      ? 'اسحب لترحيل سند القبض'
+                      : 'اسحب لـ ${_transitions.first['action'] ?? 'الإرسال'}',
                   confirmedLabel: 'تم الإرسال',
                   onConfirmed: _sendDocument,
                 ),
@@ -1814,6 +1878,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               }).toList(),
             ),
           ],
+          _buildActivitySection(),
           const SizedBox(height: 24),
           const Text(
             'التعليقات',
@@ -2071,7 +2136,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.event_available_rounded, size: 16),
-                label: Text(_addingAllReminders ? 'جاري الإضافة...' : 'إضافة الكل للتقويم'),
+                label: Text(
+                  _addingAllReminders
+                      ? 'جاري الإضافة...'
+                      : 'إضافة الكل للتقويم',
+                ),
               ),
             ],
           ),
@@ -2098,6 +2167,31 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                             fontSize: 13,
                           ),
                         ),
+                        if (row['payment_term'] != null)
+                          Text(
+                            row['payment_term'].toString(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (row['description'] != null &&
+                            row['description'].toString().trim().isNotEmpty)
+                          Text(
+                            stripHtml(row['description'].toString()),
+                            style: const TextStyle(
+                              color: AppColors.midGray,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (row['invoice_portion'] != null)
+                          Text(
+                            'نسبة الفاتورة: ${row['invoice_portion']}%',
+                            style: const TextStyle(
+                              color: AppColors.midGray,
+                              fontSize: 12,
+                            ),
+                          ),
                         if (amount != null)
                           Text(
                             '${amount.toStringAsFixed(2)} ج.م',
@@ -2135,6 +2229,122 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                           tooltip: 'إضافة تذكير للتقويم',
                         ),
                 ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildSalesTeamSection(Map<String, dynamic> doc) {
+    final value = doc['sales_team'];
+    if (value is! List || value.isEmpty) return null;
+    final rows = value.whereType<Map>().toList();
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'فريق المبيعات',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          ...rows.map(
+            (row) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      (row['sales_person'] ?? '—').toString(),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text('${row['allocated_percentage'] ?? 0}%'),
+                  const SizedBox(width: 12),
+                  Text('${row['allocated_amount'] ?? 0} ج.م'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivitySection() {
+    if (_loadingActivity) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 20),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    if (_activity.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'سجل النشاط',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          ..._activity.map((event) {
+            final referenceName = event['reference_name']?.toString();
+            return InkWell(
+              onTap: referenceName == null
+                  ? null
+                  : () => context.push(
+                      documentDetailRoute(
+                        event['reference_doctype']?.toString() ??
+                            'Payment Entry',
+                        referenceName,
+                      ),
+                    ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.history_rounded,
+                      size: 18,
+                      color: AppColors.accent,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (event['label'] ?? 'تحديث').toString(),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            '${event['actor'] ?? '—'} • ${_relativeTime(event['timestamp']?.toString())}',
+                            style: const TextStyle(
+                              color: AppColors.midGray,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }),

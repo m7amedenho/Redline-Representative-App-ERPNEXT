@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -271,8 +271,10 @@ class ErpService {
   /// on any failure or if no state-changing Version exists yet â€” callers
   /// must treat null as "assume a normal adjacent transition", never as an
   /// error.
-  static Future<({String fromState, String? actor})?>
-  getLastWorkflowTransition(String doctype, String name) async {
+  static Future<({String fromState, String? actor})?> getLastWorkflowTransition(
+    String doctype,
+    String name,
+  ) async {
     try {
       final versions = await getList(
         'Version',
@@ -978,7 +980,10 @@ class ErpService {
       '/api/method/erpnext.stock.doctype.batch.batch.get_batch_qty',
       params: {'item_code': itemCode, 'warehouse': warehouse},
     );
-    return list.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    return list
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   // ---- Confirmed endpoint wrappers -----------------------------------
@@ -1235,16 +1240,28 @@ class ErpService {
   /// info unavailable" rather than a hard error, since it's a secondary
   /// enhancement on the customer list, not a blocker.
   static Future<Map<String, dynamic>?> getCustomerCreditStatus(
-    String customer,
-  ) async {
-    try {
-      return await callMethod(
-        '/api/method/red_app.api.get_customer_credit_status',
-        params: {'customer': customer},
-      );
-    } on ErpException {
-      return null;
+    String customer, {
+    String? company,
+  }) async {
+    final params = <String, dynamic>{
+      'customer': customer,
+      if (company != null && company.isNotEmpty) 'company': company,
+    };
+    // Keep the Python dotted path first for backwards compatibility with
+    // existing deployments/old app versions.  Some sites expose the same
+    // operation as an API Server Script, whose route is the short path.
+    for (final path in const [
+      '/api/method/red_app.api.get_customer_credit_status',
+      '/api/method/get_customer_credit_status',
+    ]) {
+      try {
+        return await callMethod(path, params: params);
+      } on ErpException {
+        // Try the compatible route; credit is supplementary and should not
+        // prevent the customer/document itself from opening.
+      }
     }
+    return null;
   }
 
   // ---- Response unwrapping / error mapping ---------------------------
@@ -1314,8 +1331,9 @@ class ErpService {
           'ØªØ¹Ø°Ø± Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ ØªØ£ÙƒØ¯ Ù…Ù† Ø§ØªØµØ§Ù„Ùƒ Ø¨Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª.',
         );
       default:
-        return const ErpException('Ø­Ø¯Ø« Ø®Ø·Ø£ ØºÙŠØ± Ù…ØªÙˆÙ‚Ø¹ØŒ Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ù„Ø§Ø­Ù‚Ù‹Ø§.');
+        return const ErpException(
+          'Ø­Ø¯Ø« Ø®Ø·Ø£ ØºÙŠØ± Ù…ØªÙˆÙ‚Ø¹ØŒ Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ù„Ø§Ø­Ù‚Ù‹Ø§.',
+        );
     }
   }
 }
-

@@ -62,53 +62,61 @@ void main() {
     await store.write('red_erp_refresh_token', 'RT-current');
   });
 
-  test('createDoc posts to /api/resource/<DocType> and unwraps {data: ...}', () async {
-    final dio = Dio(BaseOptions())
-      ..httpClientAdapter = _FakeAdapter((options) {
-        expect(options.method, 'POST');
-        expect(options.path, '/api/resource/Sales Order');
-        expect(options.headers['Authorization'], 'Bearer AT-current');
-        return _jsonResponse({
-          'data': {'name': 'SO-0001', 'customer': 'ACME'},
-        }, 200);
+  test(
+    'createDoc posts to /api/resource/<DocType> and unwraps {data: ...}',
+    () async {
+      final dio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          expect(options.method, 'POST');
+          expect(options.path, '/api/resource/Sales Order');
+          expect(options.headers['Authorization'], 'Bearer AT-current');
+          return _jsonResponse({
+            'data': {'name': 'SO-0001', 'customer': 'ACME'},
+          }, 200);
+        });
+      ErpService.debugOverrideDio(dio);
+
+      final doc = await ErpService.createDoc('Sales Order', {
+        'customer': 'ACME',
       });
-    ErpService.debugOverrideDio(dio);
 
-    final doc = await ErpService.createDoc('Sales Order', {'customer': 'ACME'});
+      expect(doc['name'], 'SO-0001');
+    },
+  );
 
-    expect(doc['name'], 'SO-0001');
-  });
+  test(
+    'getList sends JSON-encoded filters/fields and unwraps {data: [...]}',
+    () async {
+      final dio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          expect(options.method, 'GET');
+          expect(options.path, '/api/resource/Customer');
+          expect(
+            options.queryParameters['filters'],
+            jsonEncode([
+              ['customer_name', 'like', '%نور%'],
+            ]),
+          );
+          return _jsonResponse({
+            'data': [
+              {'name': 'CUST-01', 'customer_name': 'سوبر ماركت النور'},
+            ],
+          }, 200);
+        });
+      ErpService.debugOverrideDio(dio);
 
-  test('getList sends JSON-encoded filters/fields and unwraps {data: [...]}', () async {
-    final dio = Dio(BaseOptions())
-      ..httpClientAdapter = _FakeAdapter((options) {
-        expect(options.method, 'GET');
-        expect(options.path, '/api/resource/Customer');
-        expect(
-          options.queryParameters['filters'],
-          jsonEncode([
-            ['customer_name', 'like', '%نور%'],
-          ]),
-        );
-        return _jsonResponse({
-          'data': [
-            {'name': 'CUST-01', 'customer_name': 'سوبر ماركت النور'},
-          ],
-        }, 200);
-      });
-    ErpService.debugOverrideDio(dio);
+      final list = await ErpService.getList(
+        'Customer',
+        filters: [
+          ['customer_name', 'like', '%نور%'],
+        ],
+        fields: ['name', 'customer_name'],
+      );
 
-    final list = await ErpService.getList(
-      'Customer',
-      filters: [
-        ['customer_name', 'like', '%نور%'],
-      ],
-      fields: ['name', 'customer_name'],
-    );
-
-    expect(list, hasLength(1));
-    expect(list.first['customer_name'], 'سوبر ماركت النور');
-  });
+      expect(list, hasLength(1));
+      expect(list.first['customer_name'], 'سوبر ماركت النور');
+    },
+  );
 
   test('callMethod unwraps a {"message": {...}} RPC envelope', () async {
     final dio = Dio(BaseOptions())
@@ -210,40 +218,79 @@ void main() {
     expect(doc['name'], 'CUST-01');
   });
 
-  test('a 401 that survives the refresh throws a sessionExpired error', () async {
-    final authDio = Dio(BaseOptions())
-      ..httpClientAdapter = _FakeAdapter((options) {
-        return _jsonResponse({'message': 'Invalid refresh token'}, 401);
-      });
-    AuthService.debugOverrideDio(authDio);
+  test(
+    'a 401 that survives the refresh throws a sessionExpired error',
+    () async {
+      final authDio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          return _jsonResponse({'message': 'Invalid refresh token'}, 401);
+        });
+      AuthService.debugOverrideDio(authDio);
 
-    final erpDio = Dio(BaseOptions())
-      ..httpClientAdapter = _FakeAdapter((options) {
-        return _jsonResponse({'message': 'Token expired'}, 401);
-      });
-    ErpService.debugOverrideDio(erpDio);
+      final erpDio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          return _jsonResponse({'message': 'Token expired'}, 401);
+        });
+      ErpService.debugOverrideDio(erpDio);
 
-    await expectLater(
-      ErpService.getDoc('Customer', 'CUST-01'),
-      throwsA(
-        isA<ErpException>().having(
-          (e) => e.sessionExpired,
-          'sessionExpired',
-          true,
+      await expectLater(
+        ErpService.getDoc('Customer', 'CUST-01'),
+        throwsA(
+          isA<ErpException>().having(
+            (e) => e.sessionExpired,
+            'sessionExpired',
+            true,
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 
-  test('getCustomerCreditStatus swallows any failure and returns null', () async {
-    final dio = Dio(BaseOptions())
-      ..httpClientAdapter = _FakeAdapter((options) {
-        return _jsonResponse({'message': 'Not Found'}, 404);
-      });
-    ErpService.debugOverrideDio(dio);
+  test(
+    'getCustomerCreditStatus swallows any failure and returns null',
+    () async {
+      final dio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          return _jsonResponse({'message': 'Not Found'}, 404);
+        });
+      ErpService.debugOverrideDio(dio);
 
-    final result = await ErpService.getCustomerCreditStatus('CUST-01');
+      final result = await ErpService.getCustomerCreditStatus('CUST-01');
 
-    expect(result, isNull);
-  });
+      expect(result, isNull);
+    },
+  );
+
+  test(
+    'getCustomerCreditStatus falls back to the Server Script route',
+    () async {
+      final requestedPaths = <String>[];
+      final dio = Dio(BaseOptions())
+        ..httpClientAdapter = _FakeAdapter((options) {
+          requestedPaths.add(options.path);
+          if (options.path.contains('red_app.api')) {
+            return _jsonResponse({'message': 'Not Found'}, 404);
+          }
+          return _jsonResponse({
+            'message': {
+              'credit_limit': 10000,
+              'outstanding': 2500,
+              'available': 7500,
+            },
+          }, 200);
+        });
+      ErpService.debugOverrideDio(dio);
+
+      final result = await ErpService.getCustomerCreditStatus(
+        'CUST-01',
+        company: 'Company A',
+      );
+
+      expect(requestedPaths, [
+        '/api/method/red_app.api.get_customer_credit_status',
+        '/api/method/get_customer_credit_status',
+      ]);
+      expect(result?['available'], 7500);
+    },
+  );
 }

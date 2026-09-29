@@ -3,7 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../local_db/sync_job_type.dart';
 import '../services/erp_service.dart';
+import '../services/sync_engine.dart';
+import '../services/sync_status_service.dart';
 import '../theme/app_theme.dart';
 
 /// بعد إرسال طلبية/فاتورة بنجاح — يسأل المندوب هل يسجل زيارة لنفس العميل،
@@ -16,7 +19,9 @@ Future<void> promptLogVisit(
   required String customer,
   String? territory,
   required String referenceDoctype,
-  required String referenceName,
+  String? referenceName,
+  String visitType = 'زيارة',
+  String? receiptNumber,
 }) async {
   final wantsToLog = await showDialog<bool>(
     context: context,
@@ -75,23 +80,70 @@ Future<void> promptLogVisit(
     final salesPerson = await ErpService.resolveCurrentSalesPerson();
     final body = <String, dynamic>{
       'customer': customer,
+      'visit_type': visitType,
       if (territory != null && territory.isNotEmpty) 'territory': territory,
       'sales_person': ?salesPerson,
       if (notes.isNotEmpty) 'notes': notes,
+      if (receiptNumber != null && receiptNumber.trim().isNotEmpty)
+        'receipt_number': receiptNumber.trim(),
       'location': ?location,
-      'reference_doctype': referenceDoctype,
-      'reference_name': referenceName,
+      if (referenceName != null && referenceName.isNotEmpty) ...{
+        'reference_doctype': referenceDoctype,
+        'reference_name': referenceName,
+      },
     };
-    await ErpService.createDoc('Customer Visit', body);
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تم تسجيل الزيارة بنجاح')));
+    final queued = !SyncStatusService().isOnline;
+    if (queued) {
+      await SyncEngine().enqueue(
+        type: SyncJobType.customerVisitCreate,
+        payload: body,
+      );
+    } else {
+      await ErpService.createDoc('Customer Visit', body);
     }
-  } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر تسجيل الزيارة، لكن المستند اتحفظ بنجاح')),
+        SnackBar(
+          content: Text(
+            queued
+                ? 'تم حفظ الزيارة وستُرسل تلقائيًا عند عودة الاتصال'
+                : 'تم تسجيل الزيارة بنجاح',
+          ),
+        ),
+      );
+    }
+  } on ErpException catch (e) {
+    if (e.isConnectivityFailure) {
+      final body = <String, dynamic>{
+        'customer': customer,
+        'visit_type': visitType,
+        if (territory != null && territory.isNotEmpty) 'territory': territory,
+        if (notes.isNotEmpty) 'notes': notes,
+        if (receiptNumber != null && receiptNumber.trim().isNotEmpty)
+          'receipt_number': receiptNumber.trim(),
+        if (referenceName != null && referenceName.isNotEmpty) ...{
+          'reference_doctype': referenceDoctype,
+          'reference_name': referenceName,
+        },
+      };
+      await SyncEngine().enqueue(
+        type: SyncJobType.customerVisitCreate,
+        payload: body,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر الاتصال — تم حفظ الزيارة وستُرسل تلقائيًا'),
+          ),
+        );
+      }
+      return;
+    }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تسجيل الزيارة، لكن المستند اتحفظ بنجاح'),
+        ),
       );
     }
   }
