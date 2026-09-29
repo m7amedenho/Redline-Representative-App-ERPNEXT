@@ -50,6 +50,7 @@ const _quickActions = [
     'تسجيل زيارة',
     route: '/customer-visits',
   ),
+  _QuickAction(Icons.note_alt_rounded, 'المذكرات', route: '/issues'),
   _QuickAction(
     Icons.person_add_rounded,
     'تسجيل عميل جديد',
@@ -71,11 +72,7 @@ const _quickActions = [
     'بانتظار موافقتي',
     route: '/pending-approvals',
   ),
-  _QuickAction(
-    Icons.history_rounded,
-    'حركة المخزون',
-    route: '/stock-movement',
-  ),
+  _QuickAction(Icons.history_rounded, 'حركة المخزون', route: '/stock-movement'),
 ];
 
 /// Shown instead of [_quickActions] for a `WF - Region Manager` — full
@@ -663,9 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (context) {
                           final balance = _treasuryBalances[treasury.name];
                           return Text(
-                            balance != null
-                                ? balance.toStringAsFixed(0)
-                                : '—',
+                            balance != null ? balance.toStringAsFixed(0) : '—',
                             style: const TextStyle(
                               color: AppColors.white,
                               fontSize: 17,
@@ -794,7 +789,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.accent,
+            ),
           ),
         ),
       );
@@ -831,11 +829,17 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   '${achieved.toStringAsFixed(0)} ج.م',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
                 ),
                 Text(
                   'الهدف: ${target.toStringAsFixed(0)} ج.م',
-                  style: const TextStyle(color: AppColors.midGray, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppColors.midGray,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -846,7 +850,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 value: target > 0 ? (achieved / target).clamp(0, 1) : 0,
                 minHeight: 8,
                 backgroundColor: AppColors.lightGray,
-                color: achieved >= target ? AppColors.success : AppColors.accent,
+                color: achieved >= target
+                    ? AppColors.success
+                    : AppColors.accent,
               ),
             ),
           ],

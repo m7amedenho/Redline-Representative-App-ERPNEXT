@@ -7,7 +7,12 @@ import 'loading_indicator.dart';
 
 /// A record shown in [showSearchPicker]'s results list.
 class PickedRecord {
-  const PickedRecord({required this.name, required this.label, this.subtitle});
+  const PickedRecord({
+    required this.name,
+    required this.label,
+    this.subtitle,
+    this.enabled = true,
+  });
 
   /// The DocType record's `name` (its ID) — what gets sent back to the API.
   final String name;
@@ -16,6 +21,9 @@ class PickedRecord {
   final String label;
 
   final String? subtitle;
+
+  /// Disabled results stay visible to explain why they cannot be selected.
+  final bool enabled;
 }
 
 /// Full-screen searchable picker used for Customer/Item/Vehicle selection
@@ -201,31 +209,57 @@ class _SearchPickerScreenState extends State<_SearchPickerScreen> {
       itemBuilder: (context, i) {
         final record = _results[i];
         return Material(
-          color: AppColors.white,
+          color: record.enabled
+              ? AppColors.white
+              : AppColors.midGray.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppRadius.card),
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            onTap: () => Navigator.of(context).pop(record),
+            onTap: record.enabled
+                ? () => Navigator.of(context).pop(record)
+                : null,
             child: Padding(
               padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    record.label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          record.label,
+                          style: TextStyle(
+                            color: record.enabled
+                                ? AppColors.black
+                                : AppColors.midGray,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        if (record.subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            record.subtitle!,
+                            style: TextStyle(
+                              color: record.enabled
+                                  ? AppColors.midGray
+                                  : AppColors.accent,
+                              fontWeight: record.enabled
+                                  ? FontWeight.w400
+                                  : FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (record.subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      record.subtitle!,
-                      style: const TextStyle(
-                        color: AppColors.midGray,
-                        fontSize: 12,
-                      ),
+                  if (!record.enabled) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.block_rounded,
+                      color: AppColors.midGray,
+                      size: 20,
                     ),
                   ],
                 ],

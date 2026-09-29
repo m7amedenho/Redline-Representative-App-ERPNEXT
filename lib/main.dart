@@ -15,6 +15,7 @@ import 'screens/document_detail_screen.dart';
 import 'screens/due_invoices_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/issues_screen.dart';
 import 'screens/material_request_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -113,6 +114,7 @@ final _router = GoRouter(
       path: '/expenses',
       builder: (context, state) => const ExpensesScreen(),
     ),
+    GoRoute(path: '/issues', builder: (context, state) => const IssuesScreen()),
     GoRoute(
       path: '/customer-visits',
       builder: (context, state) => const CustomerVisitsScreen(),

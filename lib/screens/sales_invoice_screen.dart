@@ -277,18 +277,41 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           fetch: () => ErpService.getList(
             'Customer',
             filters: filters.isEmpty ? null : filters,
-            fields: const ['name', 'customer_name', 'territory'],
+            fields: const [
+              'name',
+              'customer_name',
+              'territory',
+              'disabled',
+              'is_frozen',
+            ],
             limit: 20,
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+            final customerName = (row['customer_name'] ?? '')
+                .toString()
+                .toLowerCase();
             final terr = (row['territory'] ?? '').toString();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) return false;
-            if (territoryFilter != null && terr != territoryFilter) return false;
-            if (territoryFilter == null && territories.length == 1 && terr != territories.first) return false;
-            if (territoryFilter == null && territories.isNotEmpty && territories.length > 1 && !territories.contains(terr)) return false;
+            if (q.isNotEmpty &&
+                !name.contains(q) &&
+                !customerName.contains(q)) {
+              return false;
+            }
+            if (territoryFilter != null && terr != territoryFilter) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.length == 1 &&
+                terr != territories.first) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.isNotEmpty &&
+                territories.length > 1 &&
+                !territories.contains(terr)) {
+              return false;
+            }
             return true;
           },
         );
@@ -297,7 +320,11 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
               (c) => PickedRecord(
                 name: c['name'] as String,
                 label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: c['territory'] as String?,
+                subtitle: ErpService.customerPickerSubtitle(
+                  c,
+                  prefix: c['territory'] as String?,
+                ),
+                enabled: ErpService.isCustomerSelectable(c),
               ),
             )
             .toList();
@@ -315,7 +342,11 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
                     context: pickerContext,
                     title: 'اختر خط السير',
                     search: (q) async => territories
-                        .where((t) => q.isEmpty || t.toLowerCase().contains(q.toLowerCase()))
+                        .where(
+                          (t) =>
+                              q.isEmpty ||
+                              t.toLowerCase().contains(q.toLowerCase()),
+                        )
                         .map((t) => PickedRecord(name: t, label: t))
                         .toList(),
                   );
@@ -432,7 +463,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final itemName = (row['item_name'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -694,9 +727,13 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            final wName = (row['warehouse_name'] ?? '').toString().toLowerCase();
+            final wName = (row['warehouse_name'] ?? '')
+                .toString()
+                .toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !wName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !wName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -793,7 +830,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final tName = (row['template_name'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !tName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !tName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -868,7 +907,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final title = (row['title'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !title.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !title.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -1256,7 +1297,8 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         if (_termsTemplate != null) 'tc_name': _termsTemplate!.name,
         if (_termsController.text.trim().isNotEmpty)
           'terms': _termsController.text.trim(),
-        'custom_رقم_الفاتورة_الورقية': _paperInvoiceNumberController.text.trim(),
+        'custom_رقم_الفاتورة_الورقية': _paperInvoiceNumberController.text
+            .trim(),
         'custom_location_url': locationUrl,
         // This business hands goods over on the spot — the invoice itself
         // deducts (or, for a return, credits back) stock directly, no
@@ -1346,7 +1388,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
     } catch (e) {
       final editDoc = widget.editDoc;
       final capturedFields = fields;
-      if (e is ErpException && e.isConnectivityFailure && capturedFields != null) {
+      if (e is ErpException &&
+          e.isConnectivityFailure &&
+          capturedFields != null) {
         if (editDoc != null) {
           await SyncEngine().enqueue(
             type: SyncJobType.genericApiCall,
@@ -1646,7 +1690,9 @@ class _SalesInvoiceScreenState extends State<SalesInvoiceScreen>
         const SizedBox(height: 8),
         TextFormField(
           controller: _paperInvoiceNumberController,
-          decoration: const InputDecoration(hintText: 'رقم الفاتورة في الدفتر الورقي'),
+          decoration: const InputDecoration(
+            hintText: 'رقم الفاتورة في الدفتر الورقي',
+          ),
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 24),

@@ -164,7 +164,13 @@ class PrefetchService {
             filters: [
               if (territories.isNotEmpty) ['territory', 'in', territories],
             ],
-            fields: const ['name', 'customer_name', 'territory'],
+            fields: const [
+              'name',
+              'customer_name',
+              'territory',
+              'disabled',
+              'is_frozen',
+            ],
             limit: 5000,
           ),
         ),
@@ -252,11 +258,8 @@ class PrefetchService {
         CacheService.getListCached(
           cacheDoctype: 'Route_master',
           cacheKey: 'master',
-          fetch: () => ErpService.getList(
-            'Route',
-            fields: const ['name'],
-            limit: 500,
-          ),
+          fetch: () =>
+              ErpService.getList('Route', fields: const ['name'], limit: 500),
         ),
         // Customer Groups
         CacheService.getListCached(

@@ -262,18 +262,41 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           fetch: () => ErpService.getList(
             'Customer',
             filters: filters.isEmpty ? null : filters,
-            fields: const ['name', 'customer_name', 'territory'],
+            fields: const [
+              'name',
+              'customer_name',
+              'territory',
+              'disabled',
+              'is_frozen',
+            ],
             limit: 20,
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            final customerName = (row['customer_name'] ?? '').toString().toLowerCase();
+            final customerName = (row['customer_name'] ?? '')
+                .toString()
+                .toLowerCase();
             final terr = (row['territory'] ?? '').toString();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !customerName.contains(q)) return false;
-            if (territoryFilter != null && terr != territoryFilter) return false;
-            if (territoryFilter == null && territories.length == 1 && terr != territories.first) return false;
-            if (territoryFilter == null && territories.isNotEmpty && territories.length > 1 && !territories.contains(terr)) return false;
+            if (q.isNotEmpty &&
+                !name.contains(q) &&
+                !customerName.contains(q)) {
+              return false;
+            }
+            if (territoryFilter != null && terr != territoryFilter) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.length == 1 &&
+                terr != territories.first) {
+              return false;
+            }
+            if (territoryFilter == null &&
+                territories.isNotEmpty &&
+                territories.length > 1 &&
+                !territories.contains(terr)) {
+              return false;
+            }
             return true;
           },
         );
@@ -282,7 +305,11 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
               (c) => PickedRecord(
                 name: c['name'] as String,
                 label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: c['territory'] as String?,
+                subtitle: ErpService.customerPickerSubtitle(
+                  c,
+                  prefix: c['territory'] as String?,
+                ),
+                enabled: ErpService.isCustomerSelectable(c),
               ),
             )
             .toList();
@@ -300,7 +327,11 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
                     context: pickerContext,
                     title: 'اختر خط السير',
                     search: (q) async => territories
-                        .where((t) => q.isEmpty || t.toLowerCase().contains(q.toLowerCase()))
+                        .where(
+                          (t) =>
+                              q.isEmpty ||
+                              t.toLowerCase().contains(q.toLowerCase()),
+                        )
                         .map((t) => PickedRecord(name: t, label: t))
                         .toList(),
                   );
@@ -425,7 +456,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final itemName = (row['item_name'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !itemName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -570,9 +603,13 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
           ),
           searchFilter: (row) {
             final name = (row['name'] ?? '').toString().toLowerCase();
-            final wName = (row['warehouse_name'] ?? '').toString().toLowerCase();
+            final wName = (row['warehouse_name'] ?? '')
+                .toString()
+                .toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !wName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !wName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -623,7 +660,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final tName = (row['template_name'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !tName.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !tName.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -704,7 +743,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
             final name = (row['name'] ?? '').toString().toLowerCase();
             final title = (row['title'] ?? '').toString().toLowerCase();
             final q = query.toLowerCase();
-            if (q.isNotEmpty && !name.contains(q) && !title.contains(q)) return false;
+            if (q.isNotEmpty && !name.contains(q) && !title.contains(q)) {
+              return false;
+            }
             return true;
           },
         );
@@ -1107,7 +1148,9 @@ class _SalesOrderScreenState extends State<SalesOrderScreen>
       return true;
     } catch (e) {
       final capturedFields = fields;
-      if (e is ErpException && e.isConnectivityFailure && capturedFields != null) {
+      if (e is ErpException &&
+          e.isConnectivityFailure &&
+          capturedFields != null) {
         final editDoc = widget.editDoc;
         if (editDoc != null) {
           await SyncEngine().enqueue(

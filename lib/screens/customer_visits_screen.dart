@@ -175,6 +175,8 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
       final customers = await ErpService.getList(
         'Customer',
         filters: [
+          ['disabled', '=', 0],
+          ['is_frozen', '=', 0],
           ['territory', 'in', territories],
         ],
         fields: const ['name', 'customer_name', 'territory'],
@@ -506,10 +508,8 @@ class _CustomerVisitsScreenState extends State<CustomerVisitsScreen>
   }
 }
 
-/// حوار تسجيل زيارة — بيلتقط GPS تلقائي best-effort (نفس نمط
-/// `_captureLocationGeoJson` من `customer_registration_screen.dart`، مش
-/// حاجب/إجباري، لأن الزيارة عبارة عن لحظة توثيق سريعة مش مستند لازم يتمنع
-/// حفظه من غير موقع).
+/// حوار تسجيل زيارة — يلتقط GPS تلقائيًا ويمنع الحفظ لو تعذر
+/// تحديد الموقع، لضمان أن كل Customer Visit جديد يحمل نقطة خريطة فعلية.
 class _LogVisitSheet extends StatefulWidget {
   const _LogVisitSheet({this.presetCustomer});
 
@@ -573,7 +573,13 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
         final list = await ErpService.getList(
           'Customer',
           filters: filters.isEmpty ? null : filters,
-          fields: const ['name', 'customer_name', 'territory'],
+          fields: const [
+            'name',
+            'customer_name',
+            'territory',
+            'disabled',
+            'is_frozen',
+          ],
           limit: 20,
         );
         return list
@@ -581,7 +587,11 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
               (c) => PickedRecord(
                 name: c['name'] as String,
                 label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: c['territory'] as String?,
+                subtitle: ErpService.customerPickerSubtitle(
+                  c,
+                  prefix: c['territory'] as String?,
+                ),
+                enabled: ErpService.isCustomerSelectable(c),
               ),
             )
             .toList();
@@ -660,6 +670,15 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
     Map<String, dynamic>? body;
     try {
       final location = await _captureLocationGeoJson();
+      if (location == null) {
+        if (!mounted) return false;
+        setState(() {
+          _error =
+              'لا يمكن تسجيل الزيارة بدون الموقع. شغّل GPS وامنح التطبيق صلاحية الموقع.';
+        });
+        await _openRelevantLocationSettings();
+        return false;
+      }
       body = <String, dynamic>{
         'customer': customer.name,
         'visit_type': _visitType,
@@ -668,7 +687,7 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
           'territory': customer.subtitle,
         if (_notesController.text.trim().isNotEmpty)
           'notes': _notesController.text.trim(),
-        'location': ?location,
+        'location': location,
       };
 
       if (!SyncStatusService().isOnline) {
@@ -701,7 +720,9 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       return true;
     } catch (e) {
       final capturedBody = body;
-      if (e is ErpException && e.isConnectivityFailure && capturedBody != null) {
+      if (e is ErpException &&
+          e.isConnectivityFailure &&
+          capturedBody != null) {
         await SyncEngine().enqueue(
           type: SyncJobType.customerVisitCreate,
           payload: capturedBody,
@@ -723,6 +744,18 @@ class _LogVisitSheetState extends State<_LogVisitSheet> {
       return false;
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _openRelevantLocationSettings() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
     }
   }
 

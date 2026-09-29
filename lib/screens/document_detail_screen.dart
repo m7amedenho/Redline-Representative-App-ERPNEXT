@@ -89,6 +89,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   bool _addingAllReminders = false;
   bool _attachingPhoto = false;
   bool _uploadingImages = false;
+  bool _closingIssue = false;
 
   /// Per-item-code discount limit for the CURRENT user's own resolved tier
   /// only (not the full `custom_role_discount_limits` table) — prefetched
@@ -1076,10 +1077,85 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         content: Text(
           total == 0
               ? 'لا توجد مواعيد استحقاق لإضافتها'
+              : succeeded == 0 && CalendarService.lastError != null
+              ? CalendarService.lastError!
               : 'تمت إضافة $succeeded من $total تذكيرًا للتقويم',
         ),
       ),
     );
+  }
+
+  bool get _canCloseIssue {
+    if (widget.doctype != 'Issue' || _doc?['status'] == 'Closed') return false;
+    const allowedRoles = {
+      'WF - Region Manager',
+      'WF - Accounts Manager',
+      'WF - General Manager',
+      'Support Manager',
+      'System Manager',
+    };
+    return _userRoles.any(allowedRoles.contains);
+  }
+
+  Future<bool> _closeIssue() async {
+    final resolution = TextEditingController(
+      text: _doc?['resolution_details']?.toString() ?? '',
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إغلاق المذكرة'),
+        content: TextField(
+          controller: resolution,
+          minLines: 3,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            labelText: 'تفاصيل الحل',
+            hintText: 'اكتب ما تم اتخاذه لإنهاء المذكرة',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('تأكيد الإغلاق'),
+          ),
+        ],
+      ),
+    );
+    final details = resolution.text.trim();
+    resolution.dispose();
+    if (confirmed != true) return false;
+
+    setState(() => _closingIssue = true);
+    try {
+      final updated = await ErpService.updateDoc('Issue', widget.name, {
+        'status': 'Closed',
+        if (details.isNotEmpty) 'resolution_details': details,
+      });
+      if (!mounted) return true;
+      setState(() => _doc = updated);
+      await Future.wait([_loadActivity(), _loadComments()]);
+      if (!mounted) return true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم إغلاق المذكرة وإرسال إشعار لمنشئها')),
+      );
+      return true;
+    } catch (e) {
+      if (!mounted) return false;
+      final message = handleErpError(context, e);
+      if (message != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _closingIssue = false);
+    }
   }
 
   /// Human-readable label for a `WF - *` discount tier — same set
@@ -1649,6 +1725,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
           ?_buildItemsSection(doc),
           ?_buildTotalsSection(doc),
+          ?_buildIssueDetailsSection(doc),
           ?_buildPaymentScheduleSection(doc),
           ?_buildSalesTeamSection(doc),
           if (widget.doctype == 'Sales Order' ||
@@ -1747,6 +1824,20 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     )
                   : const Icon(Icons.percent_rounded, size: 16),
               label: Text(_editingDiscount ? 'جاري الحفظ...' : 'تعديل الخصم'),
+            ),
+          ],
+          if (_canCloseIssue) ...[
+            const SizedBox(height: 20),
+            IgnorePointer(
+              ignoring: _closingIssue,
+              child: Opacity(
+                opacity: _closingIssue ? 0.5 : 1,
+                child: SwipeToConfirmButton(
+                  label: 'اسحب لإغلاق المذكرة',
+                  confirmedLabel: 'تم إغلاق المذكرة',
+                  onConfirmed: _closeIssue,
+                ),
+              ),
             ),
           ],
           if (canEditDocument) ...[
@@ -1945,6 +2036,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 ),
               );
             }),
+          ?_buildIssueResolutionSection(doc),
         ],
       ),
     );
@@ -2054,6 +2146,122 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       ),
     );
   }
+
+  Widget? _buildIssueDetailsSection(Map<String, dynamic> doc) {
+    if (widget.doctype != 'Issue') return null;
+    final fields =
+        <(String, dynamic)>[
+          ('الموضوع', doc['subject']),
+          ('العميل', doc['customer']),
+          ('الحالة', _issueStatusLabel(doc['status']?.toString())),
+          ('الأولوية', doc['priority']),
+          ('نوع المذكرة', doc['issue_type']),
+          ('التفاصيل', _plainText(doc['description'])),
+          ('أول رد', doc['first_responded_on']),
+          ('تاريخ الفتح', doc['opening_date']),
+          ('العميل المحتمل', doc['lead']),
+          ('جهة الاتصال', doc['contact']),
+          ('حساب البريد', doc['email_account']),
+          ('المشروع', doc['project']),
+          ('الشركة', doc['company']),
+          ('منشئ المذكرة', doc['owner']),
+          ('عبر بوابة العملاء', doc['via_customer_portal'] == 1 ? 'نعم' : 'لا'),
+        ].where((entry) {
+          final value = entry.$2;
+          return value != null && value.toString().trim().isNotEmpty;
+        }).toList();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'تفاصيل المذكرة',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          ...fields.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 125,
+                    child: Text(
+                      entry.$1,
+                      style: const TextStyle(color: AppColors.midGray),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      entry.$2.toString(),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildIssueResolutionSection(Map<String, dynamic> doc) {
+    if (widget.doctype != 'Issue' || doc['status'] != 'Closed') return null;
+    final resolution = _plainText(doc['resolution_details']);
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.08),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.task_alt_rounded, color: AppColors.success),
+              SizedBox(width: 8),
+              Text(
+                'الحل النهائي',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            resolution ?? 'تم إغلاق المذكرة بدون إضافة تفاصيل للحل.',
+            style: const TextStyle(fontSize: 13.5, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _plainText(dynamic value) {
+    if (value == null) return null;
+    final text = stripHtml(value.toString());
+    return text.isEmpty ? null : text;
+  }
+
+  String _issueStatusLabel(String? status) => switch (status) {
+    'Open' => 'مفتوحة',
+    'Replied' => 'تم الرد',
+    'On Hold' => 'معلقة',
+    'Resolved' => 'تم الحل',
+    'Closed' => 'مغلقة',
+    _ => status ?? '—',
+  };
 
   /// Generic — shows up whenever any of the standard total fields are
   /// present, regardless of doctype.

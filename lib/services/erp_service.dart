@@ -55,6 +55,44 @@ class ErpService {
 
   static Dio? _dio;
 
+  /// Customer rows used by transaction pickers must carry both status
+  /// fields. Missing fields means an old/stale cache entry and is treated
+  /// as unavailable until it is refreshed, never as implicitly active.
+  static bool isCustomerSelectable(Map<String, dynamic> row) {
+    if (!row.containsKey('disabled') || !row.containsKey('is_frozen')) {
+      return false;
+    }
+    bool enabledFlag(dynamic value) =>
+        value == true || value == 1 || value?.toString() == '1';
+    return !enabledFlag(row['disabled']) && !enabledFlag(row['is_frozen']);
+  }
+
+  static String customerAvailabilityLabel(Map<String, dynamic> row) {
+    bool enabledFlag(dynamic value) =>
+        value == true || value == 1 || value?.toString() == '1';
+    final disabled = enabledFlag(row['disabled']);
+    final frozen = enabledFlag(row['is_frozen']);
+    if (disabled && frozen) return 'معطل ومجمد';
+    if (disabled) return 'معطل';
+    if (frozen) return 'مجمد';
+    if (!row.containsKey('disabled') || !row.containsKey('is_frozen')) {
+      return 'الحالة غير محدثة';
+    }
+    return '';
+  }
+
+  static String? customerPickerSubtitle(
+    Map<String, dynamic> row, {
+    String? prefix,
+  }) {
+    final status = customerAvailabilityLabel(row);
+    final parts = <String>[
+      if (prefix != null && prefix.trim().isNotEmpty) prefix.trim(),
+      if (status.isNotEmpty) status,
+    ];
+    return parts.isEmpty ? null : parts.join(' • ');
+  }
+
   @visibleForTesting
   static void debugOverrideDio(Dio dio) => _dio = dio;
 
@@ -71,7 +109,7 @@ class ErpService {
 
     if (domain == null || token == null) {
       throw const ErpException(
-        'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¬Ù„Ø³Ø© Ù…Ø­ÙÙˆØ¸Ø©.',
+        'لا توجد جلسة محفوظة.',
         serverRejected: true,
         sessionExpired: true,
       );
@@ -115,7 +153,7 @@ class ErpService {
       response = e.response!;
     } on TimeoutException {
       throw const ErpException(
-        'Ø§Ù†ØªÙ‡Øª Ù…Ù‡Ù„Ø© Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ø´Ø¨ÙƒØ© ÙˆØ­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
       );
     }
 
@@ -124,7 +162,7 @@ class ErpService {
         await AuthService.refreshSession();
       } on AuthException {
         throw const ErpException(
-          'Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ø¬Ù„Ø³Ø©ØŒ Ø¨Ø±Ø¬Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+          'انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى.',
           serverRejected: true,
           sessionExpired: true,
         );
@@ -656,9 +694,7 @@ class ErpService {
     }
 
     if (territories.isEmpty && hadConnectivityFailure) {
-      throw const ErpException(
-        'ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ¯ Ù…Ù†Ø§Ø·Ù‚Ùƒ â€” ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª',
-      );
+      throw const ErpException('تعذر تحديد مناطقك — تحقق من الاتصال بالإنترنت');
     }
 
     return territories.toList();
@@ -1121,7 +1157,7 @@ class ErpService {
     final token = await AuthService.currentAccessToken();
     if (domain == null || token == null) {
       throw const ErpException(
-        'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¬Ù„Ø³Ø© Ù…Ø­ÙÙˆØ¸Ø©.',
+        'لا توجد جلسة محفوظة.',
         serverRejected: true,
         sessionExpired: true,
       );
@@ -1158,7 +1194,7 @@ class ErpService {
       throw _mapDioException(e);
     } on TimeoutException {
       throw const ErpException(
-        'Ø§Ù†ØªÙ‡Øª Ù…Ù‡Ù„Ø© Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ø´Ø¨ÙƒØ© ÙˆØ­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+        'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
       );
     }
 
@@ -1170,7 +1206,7 @@ class ErpService {
         await AuthService.refreshSession();
       } on AuthException {
         throw const ErpException(
-          'Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ø¬Ù„Ø³Ø©ØŒ Ø¨Ø±Ø¬Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+          'انتهت صلاحية الجلسة، برجاء تسجيل الدخول مرة أخرى.',
           serverRejected: true,
           sessionExpired: true,
         );
@@ -1287,7 +1323,7 @@ class ErpService {
       if (excType == 'PermissionError' ||
           exception.contains('PermissionError')) {
         return const ErpException(
-          'Ù„ÙŠØ³ Ù„Ø¯ÙŠÙƒ ØµÙ„Ø§Ø­ÙŠØ© Ù„ØªÙ†ÙÙŠØ° Ù‡Ø°Ø§ Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡.',
+          'ليس لديك صلاحية لتنفيذ هذا الإجراء.',
           serverRejected: true,
         );
       }
@@ -1302,14 +1338,14 @@ class ErpService {
 
     if (response.statusCode == 401 || response.statusCode == 403) {
       return const ErpException(
-        'Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ø¬Ù„Ø³Ø© Ø£Ùˆ Ù„ÙŠØ³ Ù„Ø¯ÙŠÙƒ ØµÙ„Ø§Ø­ÙŠØ© ÙƒØ§ÙÙŠØ©.',
+        'انتهت صلاحية الجلسة أو ليس لديك صلاحية كافية.',
         serverRejected: true,
         sessionExpired: true,
       );
     }
 
     return const ErpException(
-      'Ø­Ø¯Ø« Ø®Ø·Ø£ ØºÙŠØ± Ù…ØªÙˆÙ‚Ø¹ Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+      'حدث خطأ غير متوقع أثناء الاتصال بالسيرفر، حاول مرة أخرى.',
       serverRejected: true,
     );
   }
@@ -1324,16 +1360,14 @@ class ErpService {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const ErpException(
-          'Ø§Ù†ØªÙ‡Øª Ù…Ù‡Ù„Ø© Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ø´Ø¨ÙƒØ© ÙˆØ­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.',
+          'انتهت مهلة الاتصال بالسيرفر، تأكد من الشبكة وحاول مرة أخرى.',
         );
       case DioExceptionType.connectionError:
         return const ErpException(
-          'ØªØ¹Ø°Ø± Ø§Ù„Ø§ØªØµØ§Ù„ Ø¨Ø§Ù„Ø³ÙŠØ±ÙØ±ØŒ ØªØ£ÙƒØ¯ Ù…Ù† Ø§ØªØµØ§Ù„Ùƒ Ø¨Ø§Ù„Ø¥Ù†ØªØ±Ù†Øª.',
+          'تعذر الاتصال بالسيرفر، تأكد من اتصالك بالإنترنت.',
         );
       default:
-        return const ErpException(
-          'Ø­Ø¯Ø« Ø®Ø·Ø£ ØºÙŠØ± Ù…ØªÙˆÙ‚Ø¹ØŒ Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ù„Ø§Ø­Ù‚Ù‹Ø§.',
-        );
+        return const ErpException('حدث خطأ غير متوقع، حاول مرة أخرى لاحقًا.');
     }
   }
 }

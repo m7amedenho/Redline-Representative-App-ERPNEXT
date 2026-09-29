@@ -158,7 +158,13 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
           fetch: () => ErpService.getList(
             'Customer',
             filters: filters.isEmpty ? null : filters,
-            fields: const ['name', 'customer_name', 'territory'],
+            fields: const [
+              'name',
+              'customer_name',
+              'territory',
+              'disabled',
+              'is_frozen',
+            ],
             limit: 20,
           ),
           searchFilter: (row) {
@@ -195,7 +201,11 @@ class _PaymentEntryScreenState extends State<PaymentEntryScreen> {
               (c) => PickedRecord(
                 name: c['name'] as String,
                 label: (c['customer_name'] as String?) ?? c['name'] as String,
-                subtitle: c['territory'] as String?,
+                subtitle: ErpService.customerPickerSubtitle(
+                  c,
+                  prefix: c['territory'] as String?,
+                ),
+                enabled: ErpService.isCustomerSelectable(c),
               ),
             )
             .toList();

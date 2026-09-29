@@ -38,13 +38,31 @@ class CalendarService {
     }
 
     final calendarsResult = await _plugin.retrieveCalendars();
-    final calendars = calendarsResult.data;
-    if (calendars == null || calendars.isEmpty) return null;
+    final calendars = calendarsResult.data ?? const <Calendar>[];
 
     final writable = calendars
         .where((c) => c.isReadOnly == false && c.id != null)
         .toList();
-    if (writable.isEmpty) return null;
+    if (writable.isEmpty) {
+      // Some Android phones expose only read-only holiday calendars until
+      // an account calendar is created. Create an app-owned local calendar
+      // once so reminders still work without requiring a Google account.
+      final created = await _plugin.createCalendar(
+        'Red ERP - الاستحقاقات',
+        localAccountName: 'Red ERP',
+      );
+      if (created.data != null && created.data!.isNotEmpty) {
+        return created.data;
+      }
+      lastError = created.errors
+          .map((e) => e.errorMessage)
+          .whereType<String>()
+          .join('\n');
+      if (lastError?.isEmpty ?? true) {
+        lastError = 'لا يوجد تقويم قابل للكتابة وتعذر إنشاء تقويم محلي.';
+      }
+      return null;
+    }
 
     final defaults = writable.where((c) => c.isDefault == true).toList();
     return (defaults.isNotEmpty ? defaults.first : writable.first).id;
@@ -68,7 +86,7 @@ class CalendarService {
       _ensureTimezone();
       final calendarId = await _resolveWritableCalendarId();
       if (calendarId == null) {
-        lastError = 'لا يوجد تقويم قابل للكتابة أو لم يتم منح الصلاحية.';
+        lastError ??= 'تعذر إنشاء تقويم Red ERP. تأكد من منح صلاحية التقويم.';
         return false;
       }
 

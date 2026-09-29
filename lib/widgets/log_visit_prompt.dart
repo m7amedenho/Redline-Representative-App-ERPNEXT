@@ -75,10 +75,15 @@ Future<void> promptLogVisit(
   notesController.dispose();
   if (confirmed != true) return;
 
+  Map<String, dynamic>? visitBody;
   try {
     final location = await _captureVisitLocation();
+    if (location == null) {
+      if (context.mounted) await _showLocationRequired(context);
+      return;
+    }
     final salesPerson = await ErpService.resolveCurrentSalesPerson();
-    final body = <String, dynamic>{
+    visitBody = <String, dynamic>{
       'customer': customer,
       'visit_type': visitType,
       if (territory != null && territory.isNotEmpty) 'territory': territory,
@@ -86,7 +91,7 @@ Future<void> promptLogVisit(
       if (notes.isNotEmpty) 'notes': notes,
       if (receiptNumber != null && receiptNumber.trim().isNotEmpty)
         'receipt_number': receiptNumber.trim(),
-      'location': ?location,
+      'location': location,
       if (referenceName != null && referenceName.isNotEmpty) ...{
         'reference_doctype': referenceDoctype,
         'reference_name': referenceName,
@@ -96,10 +101,10 @@ Future<void> promptLogVisit(
     if (queued) {
       await SyncEngine().enqueue(
         type: SyncJobType.customerVisitCreate,
-        payload: body,
+        payload: visitBody,
       );
     } else {
-      await ErpService.createDoc('Customer Visit', body);
+      await ErpService.createDoc('Customer Visit', visitBody);
     }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,22 +118,10 @@ Future<void> promptLogVisit(
       );
     }
   } on ErpException catch (e) {
-    if (e.isConnectivityFailure) {
-      final body = <String, dynamic>{
-        'customer': customer,
-        'visit_type': visitType,
-        if (territory != null && territory.isNotEmpty) 'territory': territory,
-        if (notes.isNotEmpty) 'notes': notes,
-        if (receiptNumber != null && receiptNumber.trim().isNotEmpty)
-          'receipt_number': receiptNumber.trim(),
-        if (referenceName != null && referenceName.isNotEmpty) ...{
-          'reference_doctype': referenceDoctype,
-          'reference_name': referenceName,
-        },
-      };
+    if (e.isConnectivityFailure && visitBody != null) {
       await SyncEngine().enqueue(
         type: SyncJobType.customerVisitCreate,
-        payload: body,
+        payload: visitBody,
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -146,6 +139,38 @@ Future<void> promptLogVisit(
         ),
       );
     }
+  }
+}
+
+Future<void> _showLocationRequired(BuildContext context) async {
+  final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  final permission = await Geolocator.checkPermission();
+  if (!context.mounted) return;
+  final openSettings = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('الموقع مطلوب'),
+      content: const Text(
+        'لا يمكن تسجيل زيارة بدون الموقع. شغّل GPS وامنح Red ERP صلاحية الموقع ثم حاول مرة أخرى.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('إلغاء'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('فتح الإعدادات'),
+        ),
+      ],
+    ),
+  );
+  if (openSettings != true) return;
+  if (!serviceEnabled) {
+    await Geolocator.openLocationSettings();
+  } else if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    await Geolocator.openAppSettings();
   }
 }
 
